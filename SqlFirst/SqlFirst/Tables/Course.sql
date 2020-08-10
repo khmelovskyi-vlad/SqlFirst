@@ -1,0 +1,5 @@
+﻿CREATE TABLE [dbo].[Course]
+(
+	[Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY, 
+    [Name] INT NOT NULL
+)
