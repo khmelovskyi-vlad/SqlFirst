@@ -61,6 +61,8 @@
     <Folder Include="Tables" />
     <Folder Include="Initializators" />
     <Folder Include="Query" />
+    <Folder Include="Views" />
+    <Folder Include="Functions" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="Tables\Student.sql" />
@@ -69,6 +71,9 @@
     <Build Include="Tables\Specialty.sql" />
     <Build Include="Tables\Score.sql" />
     <Build Include="Tables\Subject.sql" />
+    <Build Include="Views\GetBadStudents.sql" />
+    <Build Include="Views\SmallSubjectScore.sql" />
+    <Build Include="Functions\GetCleverStudents.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Initializators\FillGroupsOld.sql" />

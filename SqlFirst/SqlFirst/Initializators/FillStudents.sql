@@ -63,7 +63,7 @@ VALUES
 
 (NEWID(), 3, '1', @thirdtId),
 (NEWID(), 3, '2', @thirdtId),
-(NEWID(), 3, '3', @thirdtId),
+(NEWID(), 5, '3', @thirdtId),
 (NEWID(), 3, '4', @thirdtId),
 (NEWID(), 3, '5', @thirdtId),
 
@@ -77,7 +77,7 @@ VALUES
 (NEWID(), 4, '2', @fifthId),
 (NEWID(), 3, '3', @fifthId),
 (NEWID(), 5, '4', @fifthId),
-(NEWID(), 4, '5', @fifthId)
+(NEWID(), 1, '5', @fifthId)
 
 INSERT INTO [dbo].StudentScore
 (Id, [Count], [SubjectId], StudentId)
