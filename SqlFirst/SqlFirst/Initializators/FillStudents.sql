@@ -49,7 +49,7 @@ CREATE TABLE #TempSubject
 INSERT INTO #TempSubject
 (Id, [Count], [SubjectName], StudentId)
 VALUES
-(NEWID(), 5, '1', @firstId),
+(NEWID(), 4, '1', @firstId),
 (NEWID(), 4, '2', @firstId),
 (NEWID(), 5, '3', @firstId),
 (NEWID(), 5, '4', @firstId),
@@ -62,9 +62,9 @@ VALUES
 (NEWID(), 4, '5', @secondId),
 
 (NEWID(), 3, '1', @thirdtId),
-(NEWID(), 3, '2', @thirdtId),
-(NEWID(), 5, '3', @thirdtId),
-(NEWID(), 3, '4', @thirdtId),
+(NEWID(), 4, '2', @thirdtId),
+(NEWID(), 4, '3', @thirdtId),
+(NEWID(), 4, '4', @thirdtId),
 (NEWID(), 3, '5', @thirdtId),
 
 (NEWID(), 1, '1', @fourthId),

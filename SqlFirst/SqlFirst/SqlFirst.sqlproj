@@ -63,6 +63,7 @@
     <Folder Include="Query" />
     <Folder Include="Views" />
     <Folder Include="Functions" />
+    <Folder Include="Procedures" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="Tables\Student.sql" />
@@ -74,6 +75,11 @@
     <Build Include="Views\GetBadStudents.sql" />
     <Build Include="Views\SmallSubjectScore.sql" />
     <Build Include="Functions\GetCleverStudents.sql" />
+    <Build Include="Procedures\GetIndebtedness.sql" />
+    <Build Include="Views\SmallSubjectScoreWithGroupBy.sql" />
+    <Build Include="Procedures\ShowDebts.sql" />
+    <Build Include="Functions\GetStudentsAndRetransmittedSubjects.sql" />
+    <Build Include="Functions\GetStudentsWithMinimalScores.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Initializators\FillGroupsOld.sql" />

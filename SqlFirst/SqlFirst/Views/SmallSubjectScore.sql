@@ -7,4 +7,3 @@ WHERE score.[Count] <
 (SELECT AVG(sc.[Count])
 FROM [dbo].StudentScore sc
 WHERE score.SubjectId = sc.SubjectId)
-GROUP BY sub.[Name], sub.Id, st.FirstName, st.LastName, score.[Count]

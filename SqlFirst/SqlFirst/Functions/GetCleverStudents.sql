@@ -1,36 +1,30 @@
 ﻿CREATE FUNCTION [dbo].[GetCleverStudents]
 (
-	@param1 int
+	@maxFoursCount int
 )
 RETURNS @returntable TABLE
 (
-	c1 uniqueidentifier,
-	c2 nvarchar(50),
-	c3 nvarchar(50),
-	c4 int,
-	c5 int
+	[StudentId] uniqueidentifier NOT NULL,
+	[FirstName] nvarchar(50) NOT NULL,
+	[LastName] nvarchar(50) NOT NULL,
+	[FoursCount] int NOT NULL
 )
 AS
 BEGIN
-
-DECLARE @Temp TABLE
-(
-	[Id] UNIQUEIDENTIFIER NOT NULL,
-    [Score] int NOT NULL,
-    [Count] int NOT NULL
-)
-INSERT @Temp
-SELECT st.Id, score.[Count], COUNT(score.[Count])
-FROM [dbo].[StudentScore] score
-JOIN [dbo].[Student] st ON st.Id = score.StudentId
-GROUP BY st.Id, score.[Count]
-
 	INSERT @returntable
-	SELECT st.Id, st.FirstName, st.LastName, MIN(ts.[Score]), ts.[Count]
-	FROM @Temp ts
+	SELECT st.Id, st.FirstName, st.LastName, ts.[Count]
+	FROM (SELECT st.Id, score.[Count] AS [Score], COUNT(score.[Count]) AS [Count]
+	FROM [dbo].[StudentScore] score
+	JOIN [dbo].[Student] st ON st.Id = score.StudentId
+	JOIN [dbo].[Group] g ON g.Id = st.GroupId
+	JOIN [dbo].[Subject] sub ON sub.Id = score.SubjectId
+	WHERE g.CourseId = sub.CourseId AND g.SpecialtyId = g.SpecialtyId
+	GROUP BY st.Id, score.[Count]) ts
 	JOIN [dbo].Student st ON st.Id = ts.Id
+	JOIN [dbo].GetStudentsWithMinimalScores() stMin ON stMin.StudentID = st.Id
+	WHERE stMin.MinimalScore > 3 
 	GROUP BY st.Id, st.FirstName, st.LastName,ts.[Count]
-	HAVING MIN(ts.[Score]) > 3 AND 
-	CAST(1 AS BIT) LIKE CASE WHEN MIN(ts.[Score]) = 4 AND ts.[Count] < @param1 THEN CAST(1 AS BIT) ELSE CAST(0 AS bit) END
+	HAVING 
+	CAST(1 AS BIT) LIKE CAST( CASE WHEN MIN(ts.[Score]) = 4 AND ts.[Count] <= @maxFoursCount THEN 1 ELSE 0 END AS BIT)
 	RETURN;
 END
