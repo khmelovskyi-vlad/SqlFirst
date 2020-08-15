@@ -9,12 +9,14 @@ RETURNS @returntable TABLE
 AS
 BEGIN
 	INSERT @returntable
-	SELECT st.Id, MIN(score.[Count])
+	SELECT st.Id, MIN(score.[Value])
 	FROM [dbo].[StudentScore] score
 	JOIN [dbo].[Student] st ON st.Id = score.StudentId
 	JOIN [dbo].[Group] g ON g.Id = st.GroupId
 	JOIN [dbo].[Subject] sub ON sub.Id = score.SubjectId
-	WHERE g.CourseId = sub.CourseId AND g.SpecialtyId = g.SpecialtyId
+	JOIN [dbo].[SubjectCourse] subCo ON subCo.SubjectId = sub.Id
+	JOIN [dbo].[SubjectSpecialty] subSpec ON subSpec.SubjectId = sub.Id
+	WHERE g.CourseId = subCo.CourseId AND g.SpecialtyId = subSpec.SpecialtyId
 	GROUP BY st.ID
 	RETURN
 END

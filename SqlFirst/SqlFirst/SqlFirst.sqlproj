@@ -80,6 +80,8 @@
     <Build Include="Procedures\ShowDebts.sql" />
     <Build Include="Functions\GetStudentsAndRetransmittedSubjects.sql" />
     <Build Include="Functions\GetStudentsWithMinimalScores.sql" />
+    <Build Include="Tables\SubjectCourse.sql" />
+    <Build Include="Tables\SubjectSpecialty.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Initializators\FillGroupsOld.sql" />
@@ -94,6 +96,8 @@
     <None Include="Initializators\FillGroupsAverageScores.sql" />
     <None Include="Initializators\FillStudentsAverageScores.sql" />
     <None Include="Query\GetBadStudents.sql" />
+    <None Include="Initializators\FillSubjectCourse.sql" />
+    <None Include="Initializators\FillSubjectSpecialty.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="SqlFirst.refactorlog" />

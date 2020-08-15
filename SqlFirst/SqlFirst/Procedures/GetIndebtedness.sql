@@ -23,7 +23,7 @@ SELECT stud.Id, sub.[Name], COUNT(stud.Id)
 FROM [dbo].StudentScore sc
 JOIN [dbo].Student stud ON stud.Id = sc.StudentId
 JOIN [dbo].[Subject] sub ON sub.Id = sc.SubjectId
-WHERE sc.[Count] < 5
+WHERE sc.[Value] < 5
 GROUP BY stud.Id, sub.[Name]
 HAVING stud.Id NOT IN (SELECT t.Id
 FROM @Temp t)

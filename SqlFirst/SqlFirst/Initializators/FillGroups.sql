@@ -8,9 +8,10 @@
 INSERT INTO #TempGroups
 (Id, [Name], [CourseName], [SpecialtyName])
 VALUES
-(NEWID(), 'YD-01', 1, 'Economy'),
-(NEWID(), 'YD-02', 1, 'Psychology'),
-(NEWID(), 'ET-01', 1, 'Journalism')
+(NEWID(), 'Ec-01', 1, 'Economy'),
+(NEWID(), 'Ec-02', 2, 'Economy'),
+(NEWID(), 'Ps-01', 1, 'Psychology'),
+(NEWID(), 'Jo-01', 1, 'Journalism')
 
 INSERT INTO [dbo].[Group]
 (Id, [Name], AverageScore, CourseId, SpecialtyId)
