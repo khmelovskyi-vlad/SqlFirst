@@ -98,7 +98,7 @@ VALUES
 (NEWID(), 3, '3', @seventhId),
 (NEWID(), 3, '4', @seventhId)
 
-INSERT INTO [dbo].StudentScore
+INSERT INTO [dbo].[Score]
 (Id, [Value], [SubjectId], StudentId, CourseId)
 SELECT ts.Id, ts.[Count], s.Id, st.Id, g.CourseId
 FROM #TempSubject ts
@@ -129,7 +129,7 @@ VALUES
 (NEWID(), 5, '4', @seventhId, 1),
 (NEWID(), 4, '5', @seventhId, 1)
 
-INSERT INTO [dbo].StudentScore
+INSERT INTO [dbo].[Score]
 (Id, [Value], [SubjectId], StudentId, CourseId)
 SELECT ts.Id, ts.[Count], s.Id, st.Id, co.Id
 FROM #TempSubject2 ts

@@ -20,7 +20,7 @@ DECLARE @Temp2 TABLE
 
 INSERT @Temp2
 SELECT stud.Id, sub.[Name], COUNT(stud.Id)
-FROM [dbo].StudentScore sc
+FROM [dbo].[Score] sc
 JOIN [dbo].Student stud ON stud.Id = sc.StudentId
 JOIN [dbo].[Subject] sub ON sub.Id = sc.SubjectId
 WHERE sc.[Value] < 5

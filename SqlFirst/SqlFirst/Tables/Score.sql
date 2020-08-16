@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[StudentScore]
+﻿CREATE TABLE [dbo].[Score]
 (
 	[Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY, 
     [Value] INT NOT NULL, 

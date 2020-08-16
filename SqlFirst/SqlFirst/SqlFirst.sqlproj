@@ -74,7 +74,6 @@
     <Build Include="Tables\Subject.sql" />
     <Build Include="Views\GetBadStudents.sql" />
     <Build Include="Views\SmallSubjectScore.sql" />
-    <Build Include="Functions\GetCleverStudents.sql" />
     <Build Include="Procedures\GetIndebtedness.sql" />
     <Build Include="Views\SmallSubjectScoreWithGroupBy.sql" />
     <Build Include="Procedures\ShowDebts.sql" />
@@ -82,6 +81,12 @@
     <Build Include="Functions\GetStudentsWithMinimalScores.sql" />
     <Build Include="Tables\SubjectCourse.sql" />
     <Build Include="Tables\SubjectSpecialty.sql" />
+    <Build Include="Functions\GetCleverStudents.sql" />
+    <Build Include="Initializators\AddManyData.sql" />
+    <Build Include="Functions\RandIntBetween.sql" />
+    <Build Include="Functions\PickRandomChar.sql" />
+    <Build Include="Procedures\PickRandomString.sql" />
+    <Build Include="isduvhkidsgfodsgbhv.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Initializators\FillGroupsOld.sql" />
@@ -98,6 +103,7 @@
     <None Include="Query\GetBadStudents.sql" />
     <None Include="Initializators\FillSubjectCourse.sql" />
     <None Include="Initializators\FillSubjectSpecialty.sql" />
+    <None Include="Initializators\AddForeignKeys.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="SqlFirst.refactorlog" />
