@@ -64,6 +64,7 @@
     <Folder Include="Views" />
     <Folder Include="Functions" />
     <Folder Include="Procedures" />
+    <Folder Include="NormalInitializators" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="Tables\Student.sql" />
@@ -104,6 +105,12 @@
     <None Include="Initializators\FillSubjectCourse.sql" />
     <None Include="Initializators\FillSubjectSpecialty.sql" />
     <None Include="Initializators\AddForeignKeys.sql" />
+    <None Include="NormalInitializators\FillCourses.sql" />
+    <None Include="NormalInitializators\FillSpecialties.sql" />
+    <None Include="NormalInitializators\FillSubjectsSubCoSubSpec.sql" />
+    <None Include="NormalInitializators\FillGroups.sql" />
+    <None Include="NormalInitializators\FillStudentsAndScores.sql" />
+    <None Include="Initializators\AddIndexes.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="SqlFirst.refactorlog" />
