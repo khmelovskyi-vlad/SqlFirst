@@ -64,7 +64,7 @@
     <Folder Include="Views" />
     <Folder Include="Functions" />
     <Folder Include="Procedures" />
-    <Folder Include="NormalInitializators" />
+    <Folder Include="RandomInitializators" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="Tables\Student.sql" />
@@ -88,6 +88,7 @@
     <Build Include="Functions\PickRandomChar.sql" />
     <Build Include="Procedures\PickRandomString.sql" />
     <Build Include="isduvhkidsgfodsgbhv.sql" />
+    <Build Include="RandomInitializators\TriggerAddScore.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Initializators\FillGroupsOld.sql" />
@@ -105,11 +106,11 @@
     <None Include="Initializators\FillSubjectCourse.sql" />
     <None Include="Initializators\FillSubjectSpecialty.sql" />
     <None Include="Initializators\AddForeignKeys.sql" />
-    <None Include="NormalInitializators\FillCourses.sql" />
-    <None Include="NormalInitializators\FillSpecialties.sql" />
-    <None Include="NormalInitializators\FillSubjectsSubCoSubSpec.sql" />
-    <None Include="NormalInitializators\FillGroups.sql" />
-    <None Include="NormalInitializators\FillStudentsAndScores.sql" />
+    <None Include="RandomInitializators\FillCourses.sql" />
+    <None Include="RandomInitializators\FillSpecialties.sql" />
+    <None Include="RandomInitializators\FillSubjectsSubCoSubSpec.sql" />
+    <None Include="RandomInitializators\FillGroups.sql" />
+    <None Include="RandomInitializators\FillStudentsAndScores.sql" />
     <None Include="Initializators\AddIndexes.sql" />
   </ItemGroup>
   <ItemGroup>
