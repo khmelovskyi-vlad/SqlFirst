@@ -36,9 +36,23 @@
 --FROM #TempSubjectsCourses
 
 
-
-
-
+DECLARE @count INT = 1000000
+DECLARE @chars NVARCHAR(50) = 'abcdefghijklmnopqrstuvwxyz'
+WHILE @count > 0
+BEGIN
+	DECLARE @rangeStringLength INT = 5 - 1 + 1
+	DECLARE @stringLength INT = FLOOR(RAND() * @rangeStringLength + 1)
+	DECLARE @randomString NVARCHAR(50) = ''
+	WHILE LEN(@randomString) < @stringLength
+	BEGIN
+		DECLARE @range INT = LEN(@chars) - 1 + 1
+		DECLARE @resultIndex INT = FLOOR(RAND() * @range + 1)
+		DECLARE @result CHAR(1) = SUBSTRING(@chars, @resultIndex, 1)
+		SET @randomString = @randomString + @result
+	END
+	SET @count = @count - 1
+END
+ 
 
 
 
@@ -70,21 +84,21 @@
 
 --set statistics io on
 --set statistics time on
-DECLARE @i INT = 100
-WHILE @i > 0
-	BEGIN
-		SELECT TOP 100 g.Id 
-		FROM [dbo].[Group] g
-		ORDER BY NEWID()
-		--SELECT gro.Id, gro.CourseId, gro.SpecialtyId FROM (
-		--SELECT
-		--    ROW_NUMBER() OVER (ORDER BY g.Id ASC) AS rowNumber,
-		--    g.Id,
-		--	g.CourseId,
-		--	g.SpecialtyId
-		--  FROM [dbo].[Group] g
-		--) AS gro
-		--WHERE rowNumber = [dbo].RandIntBetween(1, 50, RAND())
-		SET @i = @i - 1
-	END
+--DECLARE @i INT = 100
+--WHILE @i > 0
+--	BEGIN
+--		SELECT TOP 100 g.Id 
+--		FROM [dbo].[Group] g
+--		ORDER BY NEWID()
+--		--SELECT gro.Id, gro.CourseId, gro.SpecialtyId FROM (
+--		--SELECT
+--		--    ROW_NUMBER() OVER (ORDER BY g.Id ASC) AS rowNumber,
+--		--    g.Id,
+--		--	g.CourseId,
+--		--	g.SpecialtyId
+--		--  FROM [dbo].[Group] g
+--		--) AS gro
+--		--WHERE rowNumber = [dbo].RandIntBetween(1, 50, RAND())
+--		SET @i = @i - 1
+--	END
 	

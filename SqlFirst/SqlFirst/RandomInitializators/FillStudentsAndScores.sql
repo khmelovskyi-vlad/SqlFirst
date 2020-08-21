@@ -105,6 +105,11 @@ SELECT TOP 1 g.Id, g.CourseId, g.SpecialtyId
 FROM [dbo].[Group] g
 ORDER BY NEWID()
 
+DECLARE @groupId UNIQUEIDENTIFIER = (SELECT g.Id FROM @group g)
+DECLARE @courseId UNIQUEIDENTIFIER = (SELECT g.CourseId FROM @group g)
+DECLARE @specialtyId UNIQUEIDENTIFIER = (SELECT g.SpecialtyId FROM @group g)
+
+
 DECLARE @subjectId UNIQUEIDENTIFIER = (SELECT TOP 1 s.Id
 FROM [dbo].[Subject] s
 JOIN [dbo].[SubjectCourse] subCo ON subCo.SubjectId = s.Id AND subCo.CourseId = (SELECT g.CourseId FROM @group g)
@@ -112,7 +117,9 @@ JOIN [dbo].[SubjectSpecialty] subSpec ON subSpec.SubjectId = s.Id AND subSpec.Sp
 ORDER BY NEWID())
 
 
-DECLARE @studentsCount int = 10000000
+DECLARE @firstName NVARCHAR(50) = 'first'
+DECLARE @lastName NVARCHAR(50) = 'last'
+DECLARE @studentsCount int = 100000
 CREATE TABLE #TempStudents
 (
 	Id UNIQUEIDENTIFIER NOT NULL, 
@@ -122,7 +129,7 @@ CREATE TABLE #TempStudents
 )
 CREATE TABLE #TempScores
 (
-	Id UNIQUEIDENTIFIER NOT NULL, 
+	Id UNIQUEIDENTIFIER NOT NULL,  
 	[Value] int NOT NULL,
 	SubjectId UNIQUEIDENTIFIER NOT NULL,
 	StudentId UNIQUEIDENTIFIER NOT NULL,
@@ -130,20 +137,18 @@ CREATE TABLE #TempScores
 )
 WHILE @studentsCount > 0
 	BEGIN
-		DECLARE @firstName NVARCHAR(50) = 'first'
-		DECLARE @lastName NVARCHAR(50) = 'last'
 		DECLARE @studentId uniqueidentifier = NEWID()
 
 		INSERT #TempStudents
 		(Id, FirstName, LastName, GroupId)
 		VALUES
-		(@studentId, @firstName, @lastName, (SELECT g.Id FROM @group g))
+		(@studentId, @firstName, @lastName, @groupId)
 
 		
 		INSERT #TempScores
 		(Id, [Value], SubjectId, StudentId, CourseId)
 		VALUES
-		(NEWID(), 5, @subjectId, @studentId, (SELECT g.CourseId FROM @group g))
+		(NEWID(), 5, @subjectId, @studentId, @courseId)
 
 		SET @studentsCount = @studentsCount - 1
 	END
