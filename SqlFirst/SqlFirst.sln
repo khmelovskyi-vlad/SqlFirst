@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.30320.27
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "SqlFirst", "SqlFirst\SqlFirst.sqlproj", "{D0182EBC-764C-4F7F-90C0-5B294A0BD4F3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdoNetClient", "..\AdoNetClient\AdoNetClient.csproj", "{EF43DAC2-86B6-4765-BB9C-B9BAF1CDCF1B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,6 +19,10 @@ Global
 		{D0182EBC-764C-4F7F-90C0-5B294A0BD4F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0182EBC-764C-4F7F-90C0-5B294A0BD4F3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D0182EBC-764C-4F7F-90C0-5B294A0BD4F3}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{EF43DAC2-86B6-4765-BB9C-B9BAF1CDCF1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF43DAC2-86B6-4765-BB9C-B9BAF1CDCF1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF43DAC2-86B6-4765-BB9C-B9BAF1CDCF1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF43DAC2-86B6-4765-BB9C-B9BAF1CDCF1B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
