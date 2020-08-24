@@ -47,3 +47,20 @@ ON [dbo].[Student] (AverageScore)
 INCLUDE ([FirstName], [LastName], GroupId)
 CREATE INDEX IX_Student_AverageScore2
 ON [dbo].[Student] (AverageScore)
+
+
+
+CREATE INDEX IX_Score_StudentId
+ON [dbo].[Score] (StudentId)
+CREATE INDEX IX_Score_SubjectId
+ON [dbo].[Score] (SubjectId)
+CREATE INDEX IX_Score_CourseId
+ON [dbo].[Score] (CourseId)
+CREATE INDEX IX_Score_Value
+ON [dbo].[Score] ([Value])
+
+CREATE INDEX IX_Student_GroupId
+ON [dbo].[Student] (GroupId)
+
+CREATE INDEX IX_Group_CourseId
+ON [dbo].[Group] (CourseId)

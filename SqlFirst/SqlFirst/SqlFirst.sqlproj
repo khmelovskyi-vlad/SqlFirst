@@ -89,6 +89,7 @@
     <Build Include="Procedures\PickRandomString.sql" />
     <Build Include="isduvhkidsgfodsgbhv.sql" />
     <Build Include="RandomInitializators\TriggerAddScore.sql" />
+    <Build Include="Procedures\ShowCleverStudents.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Initializators\FillGroupsOld.sql" />

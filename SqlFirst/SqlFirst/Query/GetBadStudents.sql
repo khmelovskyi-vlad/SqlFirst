@@ -34,24 +34,41 @@
 --INSERT INTO [dbo].[SubjectCourse]
 --SELECT *
 --FROM #TempSubjectsCourses
+--set statistics io on
+--set statistics time on
+DECLARE @st VARCHAR(MAX) 
+EXEC [PickRandomStringg] 1, 50, 'qwedfvdhn', @st OUTPUT
+print(@st)
+SELECT t.StudentId, COUNT(CASE WHEN t.ScoreCount = 4 THEN 1 END) AS [FoursCount], COUNT(t.StudentId) AS [Count]
+FROM (SELECT stud.Id AS [StudentId], sub.Id AS [SubjectId], sc.[Value] AS [ScoreCount]
+	FROM [dbo].[Score] sc
+	JOIN [dbo].Student stud ON stud.Id = sc.StudentId
+	JOIN [dbo].[Subject] sub ON sub.Id = sc.SubjectId
+	JOIN [dbo].[Group] g ON g.Id = stud.GroupId
+	JOIN [dbo].[SubjectCourse] subCu ON subCu.SubjectId = sub.Id AND g.CourseId = subCu.CourseId
+	JOIN [dbo].SubjectSpecialty subSpec ON subSpec.SubjectId = sub.Id AND g.SpecialtyId = subSpec.SpecialtyId
+	WHERE sc.[Value] < 5  AND g.CourseId = sc.CourseId
+	AND stud.Id NOT IN (SELECT s.StudentId
+	FROM [dbo].GetCleverStudents(5) s)) t
+GROUP BY t.StudentId
+--EXEC ShowDebts 1, 4
 
-
-DECLARE @count INT = 1000000
-DECLARE @chars NVARCHAR(50) = 'abcdefghijklmnopqrstuvwxyz'
-WHILE @count > 0
-BEGIN
-	DECLARE @rangeStringLength INT = 5 - 1 + 1
-	DECLARE @stringLength INT = FLOOR(RAND() * @rangeStringLength + 1)
-	DECLARE @randomString NVARCHAR(50) = ''
-	WHILE LEN(@randomString) < @stringLength
-	BEGIN
-		DECLARE @range INT = LEN(@chars) - 1 + 1
-		DECLARE @resultIndex INT = FLOOR(RAND() * @range + 1)
-		DECLARE @result CHAR(1) = SUBSTRING(@chars, @resultIndex, 1)
-		SET @randomString = @randomString + @result
-	END
-	SET @count = @count - 1
-END
+--DECLARE @count INT = 1000000
+--DECLARE @chars NVARCHAR(50) = 'abcdefghijklmnopqrstuvwxyz'
+--WHILE @count > 0
+--BEGIN
+--	DECLARE @rangeStringLength INT = 5 - 1 + 1
+--	DECLARE @stringLength INT = FLOOR(RAND() * @rangeStringLength + 1)
+--	DECLARE @randomString NVARCHAR(50) = ''
+--	WHILE LEN(@randomString) < @stringLength
+--	BEGIN
+--		DECLARE @range INT = LEN(@chars) - 1 + 1
+--		DECLARE @resultIndex INT = FLOOR(RAND() * @range + 1)
+--		DECLARE @result CHAR(1) = SUBSTRING(@chars, @resultIndex, 1)
+--		SET @randomString = @randomString + @result
+--	END
+--	SET @count = @count - 1
+--END
  
 
 
