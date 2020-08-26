@@ -11,6 +11,16 @@ namespace AdoNetClient
     {
         static async Task<int> Main(string[] args)
         {
+            var f = "".GetType().Name;
+            var f2 = 1.GetType().Name;
+            var f3 = 2.35.GetType().Name;
+            var f4 = 44444444444444444.GetType().Name;
+            var f5 = ' '.GetType().Name;
+            Console.WriteLine(f);
+            Console.WriteLine(f2);
+            Console.WriteLine(f3);
+            Console.WriteLine(f4);
+            Console.WriteLine(f5);
             SQLConnector sqlConnector = new SQLConnector(new ConsoleUserInteractor());
             await sqlConnector.RunSqlCli();
             return 1;

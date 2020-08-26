@@ -149,14 +149,68 @@ namespace AdoNetClient
             var sqlParameters = new SqlParameter[parametersCount];
             for (int i = 0; i < parametersCount; i++)
             {
-                var sqlParameter = new SqlParameter();
-                Console.WriteLine("Write parameter name");
-                sqlParameter.ParameterName = Console.ReadLine();
+                var sqlParameter = CreateSqlParameterWithDirection();
+                sqlParameter.ParameterName = ReadParameterName();
                 Console.WriteLine("Write parameter value");
                 sqlParameter.Value = Console.ReadLine();
                 sqlParameters[i] = sqlParameter;
             }
             sqlCommand.Parameters.AddRange(sqlParameters);
+        }
+        private string ReadParameterName()
+        {
+            Console.WriteLine("Write parameter name");
+            return Console.ReadLine();
+        }
+        //private Type ReadParameterType()
+        //{
+        //    while (true)
+        //    {
+        //        Console.WriteLine("If you want to choose the int type, click 'i'");
+        //        Console.WriteLine("If you want to choose the long type, click 'l'");
+        //        Console.WriteLine("If you want to choose the double type, click 'd'");
+        //        Console.WriteLine("If you want to choose the char type, click 'c'");
+        //        Console.WriteLine("If you want to choose the string type, click 's'");
+        //        var key = Console.ReadKey();
+        //        switch (key.Key)
+        //        {int
+        //            case ConsoleKey.I:
+        //                return 1.GetType();
+        //            default:
+        //        }
+        //    }
+        //}
+        //private SqlParameter SetParameterType(Type type)
+        //{
+        //    switch (type.Name)
+        //    {
+        //        case type.
+        //        default:
+        //            break;
+        //    }
+        //}
+        private SqlParameter CreateSqlParameterWithDirection()
+        {
+            var sqlParameter = new SqlParameter();
+            Console.WriteLine("Choose parameter direction");
+            while (true)
+            {
+                Console.WriteLine("If you want to choose the Input parameter, click 'i'");
+                Console.WriteLine("If you want to choose the InputOutput parameter, click 'o'");
+                var key = Console.ReadKey(true);
+                switch (key.Key)
+                {
+                    case ConsoleKey.I:
+                        sqlParameter.Direction = System.Data.ParameterDirection.Input;
+                        return sqlParameter;
+                    case ConsoleKey.O:
+                        sqlParameter.Direction = System.Data.ParameterDirection.InputOutput;
+                        return sqlParameter;
+                    default:
+                        Console.WriteLine("Bed input, try again");
+                        break;
+                }
+            }
         }
         private int ReadParametersCount()
         {
