@@ -23,13 +23,7 @@ namespace AdoNetClient
                 }
                 catch (SqlException ex)
                 {
-                    Console.WriteLine(ex.Message);
-                    Console.WriteLine("If you want to try again, click 'Enter'");
-                    var key = Console.ReadKey();
-                    if (key.Key != ConsoleKey.Enter)
-                    {
-                        break;
-                    }
+                    userInteractor.WriteExceptionMessage(ex);
                 }
             }
         }
@@ -41,7 +35,7 @@ namespace AdoNetClient
                 connection.Open();
                 Console.WriteLine($"You connected to data base - {connection.Database}");
                 SQLCommander sqlCommander = new SQLCommander(userInteractor);
-                await sqlCommander.RunCommandSession(connection);
+                await sqlCommander.RunCommandSession(connection, userInteractor.SelectMode());
             }
         }
         private SqlConnectionStringBuilder GetSqlConnectionStringBuilder()

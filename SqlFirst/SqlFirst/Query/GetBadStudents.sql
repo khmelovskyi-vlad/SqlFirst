@@ -51,6 +51,16 @@ FROM (SELECT stud.Id AS [StudentId], sub.Id AS [SubjectId], sc.[Value] AS [Score
 	AND stud.Id NOT IN (SELECT s.StudentId
 	FROM [dbo].GetCleverStudents(5) s)) t
 GROUP BY t.StudentId
+
+SELECT g.[Name], g.[AverageScore], c.[Name], s.[Name]
+            FROM [dbo].[Group] g
+            JOIN [dbo].[Course] c ON c.Id = g.[CourseId]
+            JOIN [dbo].[Specialty] s ON s.Id = g.[SpecialtyId]
+
+SELECT s.Id, c.Id
+FROM [dbo].[Score] s
+JOIN [dbo].[Course] c ON c.Id = s.CourseId
+WHERE s.[Value] = 5
 --EXEC ShowDebts 1, 4
 
 --DECLARE @count INT = 1000000

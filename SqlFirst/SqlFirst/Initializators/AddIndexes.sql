@@ -50,6 +50,9 @@ ON [dbo].[Student] (AverageScore)
 
 
 
+CREATE INDEX IX_Score_Id
+ON [dbo].[Score] (Id)
+
 CREATE INDEX IX_Score_StudentId
 ON [dbo].[Score] (StudentId)
 CREATE INDEX IX_Score_SubjectId

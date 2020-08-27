@@ -73,6 +73,19 @@ namespace AdoNetClient
                 }
             }
         }
+        //private bool CheckIsProcedure()
+        //{
+        //    Console.WriteLine("If this is a procedure, click 'p'");
+        //    var key = Console.ReadKey();
+        //    if (key.Key == ConsoleKey.P)
+        //    {
+        //        return true;
+        //    }
+        //    else
+        //    {
+        //        return false;
+        //    }
+        //}
         private string CreateSql(StringBuilder stringBuilder, List<StringBuilder> stringBuilders)
         {
             stringBuilders.Add(stringBuilder);
@@ -227,6 +240,78 @@ namespace AdoNetClient
                     Console.WriteLine("Bed input, try again");
                 }
             }
+        }
+
+        public SelectionModes SelectMode()
+        {
+            while (true)
+            {
+                Console.WriteLine("If you want to use the predefined query, click 'p'");
+                Console.WriteLine("If you want to use the new query, click 'n'");
+                var key = Console.ReadKey(true);
+                switch (key.Key)
+                {
+                    case ConsoleKey.P:
+                        return SelectionModes.Predefined;
+                    case ConsoleKey.N:
+                        return SelectionModes.Free;
+                }
+                Console.WriteLine("Bed input, try again");
+            }
+        }
+
+        public void ShowSuggestions(Dictionary<string, QueryInformation> repository)
+        {
+            foreach (var data in repository)
+            {
+                Console.WriteLine(data.Value.Suggestion);
+            }
+        }
+        public QueryInformation SelectQuery(Dictionary<string, QueryInformation> repository)
+        {
+            while (true)
+            {
+                var line = Console.ReadLine();
+                foreach (var data in repository)
+                {
+                    if (data.Key == line)
+                    {
+                        return data.Value;
+                    }
+                }
+                Console.WriteLine("Bed input, try again");
+            }
+        }
+
+        public DataOutputWays SelectDataOutputWay()
+        {
+            Console.WriteLine("If this procedure output some information, click 'i'");
+            Console.WriteLine("If this procedure output a scalar, click 's'");
+            Console.WriteLine("If this procedure does not output anything, click something else");
+            var key = Console.ReadKey(true);
+            if (key.Key == ConsoleKey.I)
+            {
+                return DataOutputWays.executeReader;
+            }
+            else if (key.Key == ConsoleKey.S)
+            {
+                return DataOutputWays.executeScalar;
+            }
+            else
+            {
+                return DataOutputWays.executeNoQuery;
+            }
+        }
+
+        public string ReadParameter(string message)
+        {
+            Console.WriteLine(message);
+            return Console.ReadLine();
+        }
+
+        public void WriteExceptionMessage(SqlException ex)
+        {
+            Console.WriteLine(ex.Message);
         }
     }
 }
