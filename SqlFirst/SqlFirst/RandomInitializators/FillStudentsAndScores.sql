@@ -1,5 +1,5 @@
-﻿--set statistics io on
---set statistics time on
+﻿set statistics io on
+set statistics time on
 --DECLARE @studentsCount int = 100
 --DECLARE @groupsCount int = (SELECT COUNT(Id)
 --FROM [dbo].[Group])
@@ -117,9 +117,9 @@ JOIN [dbo].[SubjectSpecialty] subSpec ON subSpec.SubjectId = s.Id AND subSpec.Sp
 ORDER BY NEWID())
 
 
-DECLARE @firstName NVARCHAR(50) = 'first'
-DECLARE @lastName NVARCHAR(50) = 'last'
-DECLARE @studentsCount int = 100000
+DECLARE @firstName NVARCHAR(50) = 'lol'
+DECLARE @lastName NVARCHAR(50) = 'lol'
+DECLARE @studentsCount int = 1
 CREATE TABLE #TempStudents
 (
 	Id UNIQUEIDENTIFIER NOT NULL, 

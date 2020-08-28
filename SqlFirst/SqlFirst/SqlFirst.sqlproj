@@ -90,6 +90,9 @@
     <Build Include="isduvhkidsgfodsgbhv.sql" />
     <Build Include="RandomInitializators\TriggerAddScore.sql" />
     <Build Include="Procedures\ShowCleverStudents.sql" />
+    <Build Include="RandomInitializators\AddStudentAverageScoresTrigger.sql" />
+    <Build Include="RandomInitializators\AddGroupAverageScoresTrigger.sql" />
+    <Build Include="Procedures\ShowSomeStudents.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Initializators\FillGroupsOld.sql" />

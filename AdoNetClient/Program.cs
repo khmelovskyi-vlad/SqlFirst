@@ -11,6 +11,7 @@ namespace AdoNetClient
     {
         static async Task<int> Main(string[] args)
         {
+            //var procinf = new ProcedureInformation();
             //QueryInformation queryInformation = new QueryInformation("", "", true, DataOutputWays.executeNoQuery,
             //    () =>
             //    {

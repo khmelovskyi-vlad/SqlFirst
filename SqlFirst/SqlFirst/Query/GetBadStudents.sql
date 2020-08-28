@@ -34,8 +34,12 @@
 --INSERT INTO [dbo].[SubjectCourse]
 --SELECT *
 --FROM #TempSubjectsCourses
---set statistics io on
---set statistics time on
+set statistics io on
+set statistics time on
+DECLARE @stCount INT = 1000;
+SELECT TOP (@stCount) Id
+FROM [dbo].Student
+ORDER BY NEWID()
 DECLARE @st VARCHAR(MAX) 
 EXEC [PickRandomStringg] 1, 50, 'qwedfvdhn', @st OUTPUT
 print(@st)

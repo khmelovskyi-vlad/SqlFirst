@@ -17,11 +17,10 @@ namespace AdoNetClient
         Task WriteCommandResult(SqlDataReader sqlDataReader);
         void WriteCountAffectedRows(int rowsCount);
         void WriteScalar(object value);
-        void AddParameters(SqlCommand sqlCommand);
+        ProcedureInformation FillProcedureInformation();
         void ShowSuggestions(Dictionary<string, QueryInformation> repository);
         QueryInformation SelectQuery(Dictionary<string, QueryInformation> repository);
-        DataOutputWays SelectDataOutputWay();
         string ReadParameter(string message);
-        void WriteExceptionMessage(SqlException ex);
+        void WriteExceptionMessage(Exception ex);
     }
 }

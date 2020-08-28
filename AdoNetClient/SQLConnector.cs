@@ -25,6 +25,10 @@ namespace AdoNetClient
                 {
                     userInteractor.WriteExceptionMessage(ex);
                 }
+                catch(Exception ex)
+                {
+                    userInteractor.WriteExceptionMessage(ex);
+                }
             }
         }
         private async Task ConnectClient()
