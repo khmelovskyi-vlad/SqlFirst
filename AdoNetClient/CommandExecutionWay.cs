@@ -4,11 +4,10 @@ using System.Text;
 
 namespace AdoNetClient
 {
-    enum DataOutputWays
+    enum CommandExecutionWay
     {
         executeNoQuery,
         executeReader,
-        executeScalar,
-        executeProcedure
+        executeScalar
     }
 }

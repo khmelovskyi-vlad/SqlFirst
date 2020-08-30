@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AdoNetClient
@@ -13,26 +15,25 @@ namespace AdoNetClient
             this.userInteractor = userInteractor;
         }
         IUserInteractor userInteractor;
-        public async Task RunCommandSession(SqlConnection connection, SelectionModes mode)
+        public async Task RunCommandSession(SqlConnection connection, SelectionMode mode)
         {
-            if (mode == SelectionModes.Free)
+            if (mode == SelectionMode.Free)
             {
-                Console.WriteLine("Enter commant");
-                var (sql, dataOutputWay) = userInteractor.ReadCommandInformation();
-                await RunCommand(sql, connection, dataOutputWay, null);
+                var commandInformation = userInteractor.ReadCommandInformation();
+                await RunCommand(commandInformation.Sql, connection, commandInformation.CommandExecutionWay, commandInformation.CommandType, null);
             }
-            else if (mode == SelectionModes.Predefined)
+            else if (mode == SelectionMode.Predefined)
             {
                 var queryInformation = FindQueryInformation();
-                await RunCommand(queryInformation.Query, connection, queryInformation.OutputWay, queryInformation.ProcedureInformation);
+                await RunCommand(queryInformation.Query, connection, queryInformation.CommandExecutionWay, queryInformation.CommandType, queryInformation.SqlParameters);
             }
         }
-        private async Task RunCommand(string sql, SqlConnection connection, DataOutputWays dataOutputWay, ProcedureInformation procedureInformation)
+        private async Task RunCommand(string sql, SqlConnection connection, CommandExecutionWay commandExecutionWay, CommandType commandType, SqlParameter[] sqlParameters)
         {
             using (SqlCommand sqlCommand = new SqlCommand(sql, connection))
             {
                 sqlCommand.CommandTimeout = int.MaxValue;
-                await RunCommand(sqlCommand, dataOutputWay, procedureInformation);
+                await ExecuteCommand(sqlCommand, commandExecutionWay, commandType, sqlParameters);
             }
         }
         private QueryInformation FindQueryInformation()
@@ -41,27 +42,33 @@ namespace AdoNetClient
             userInteractor.ShowSuggestions(queryRepository.repository);
             return userInteractor.SelectQuery(queryRepository.repository);
         }
-        private async Task RunCommand(SqlCommand sqlCommand, DataOutputWays dataOutputWay, ProcedureInformation procedureInformation)
+        private async Task ExecuteCommand(SqlCommand sqlCommand, CommandExecutionWay commandExecutionWay, CommandType commandType, SqlParameter[] sqlParameters)
         {
-            switch (dataOutputWay)
+            if (commandType == CommandType.Text)
             {
-                case DataOutputWays.executeNoQuery:
-                    await RunExecutionExecuteNonQuery(sqlCommand);
-                    break;
-                case DataOutputWays.executeReader:
-                    await RunExecutionReader(sqlCommand);
-                    break;
-                case DataOutputWays.executeScalar:
-                    await RunExecutionExecuteeScalar(sqlCommand);
-                    break;
-                case DataOutputWays.executeProcedure:
-                    await RunProcedure(sqlCommand, procedureInformation);
-                    break;
+                switch (commandExecutionWay)
+                {
+                    case CommandExecutionWay.executeNoQuery:
+                        await RunExecutionExecuteNonQuery(sqlCommand);
+                        break;
+                    case CommandExecutionWay.executeReader:
+                        await RunExecutionReader(sqlCommand);
+                        break;
+                    case CommandExecutionWay.executeScalar:
+                        await RunExecutionExecuteeScalar(sqlCommand);
+                        break;
+                }
+            }
+            else if(commandType == CommandType.StoredProcedure)
+            {
+                await RunProcedure(sqlCommand, commandExecutionWay, sqlParameters);
             }
         }
         private async Task RunExecutionReader(SqlCommand sqlCommand)
         {
-            using (SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync())
+            //var cancellationTokenSource = new CancellationTokenSource();
+            //cancellationTokenSource.Cancel();
+            using (SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync(/*cancellationTokenSource.Token*/))
             {
                 await userInteractor.WriteCommandResult(sqlDataReader);
             }
@@ -76,27 +83,27 @@ namespace AdoNetClient
             var scalar = await sqlCommand.ExecuteScalarAsync();
             userInteractor.WriteScalar(scalar);
         }
-        private async Task RunProcedure(SqlCommand sqlCommand, ProcedureInformation procedureInformation)
+        private async Task RunProcedure(SqlCommand sqlCommand, CommandExecutionWay commandExecutionWay, SqlParameter[] sqlParameters)
         {
             //var par = sqlCommand.CreateParameter();
             sqlCommand.CommandType = System.Data.CommandType.StoredProcedure;
-            if (procedureInformation == null)
+            if (sqlParameters == null)
             {
-                procedureInformation = userInteractor.FillProcedureInformation();
+                sqlParameters = userInteractor.ReadSqlParameters();
             }
-            if (procedureInformation.Parameters != null)
+            if (sqlParameters != null)
             {
-                sqlCommand.Parameters.AddRange(procedureInformation.Parameters);
+                sqlCommand.Parameters.AddRange(sqlParameters);
             }
-            switch (procedureInformation.OutputWay)
+            switch (commandExecutionWay)
             {
-                case DataOutputWays.executeNoQuery:
+                case CommandExecutionWay.executeNoQuery:
                     await RunExecutionExecuteNonQuery(sqlCommand);
                     break;
-                case DataOutputWays.executeReader:
+                case CommandExecutionWay.executeReader:
                     await RunExecutionReader(sqlCommand);
                     break;
-                case DataOutputWays.executeScalar:
+                case CommandExecutionWay.executeScalar:
                     await RunExecutionExecuteeScalar(sqlCommand);
                     break;
             }

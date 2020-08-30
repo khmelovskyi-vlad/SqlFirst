@@ -4,7 +4,7 @@ using System.Text;
 
 namespace AdoNetClient
 {
-    enum SelectionModes
+    enum SelectionMode
     {
         Free,
         Predefined

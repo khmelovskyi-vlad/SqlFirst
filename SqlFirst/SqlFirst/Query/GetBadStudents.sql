@@ -36,6 +36,9 @@
 --FROM #TempSubjectsCourses
 set statistics io on
 set statistics time on
+SELECT [Value]
+FROM [dbo].[Score]
+WHERE [Value] = 2
 DECLARE @stCount INT = 1000;
 SELECT TOP (@stCount) Id
 FROM [dbo].Student

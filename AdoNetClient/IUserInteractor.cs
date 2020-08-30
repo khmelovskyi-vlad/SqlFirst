@@ -12,12 +12,12 @@ namespace AdoNetClient
         //void Write(char value);
         //void WriteLine(string value);
         //void WriteLine();
-        SelectionModes SelectMode();
-        (string, DataOutputWays) ReadCommandInformation();
+        SelectionMode SelectMode();
+        CommandPrototype ReadCommandInformation();
         Task WriteCommandResult(SqlDataReader sqlDataReader);
         void WriteCountAffectedRows(int rowsCount);
         void WriteScalar(object value);
-        ProcedureInformation FillProcedureInformation();
+        SqlParameter[] ReadSqlParameters();
         void ShowSuggestions(Dictionary<string, QueryInformation> repository);
         QueryInformation SelectQuery(Dictionary<string, QueryInformation> repository);
         string ReadParameter(string message);

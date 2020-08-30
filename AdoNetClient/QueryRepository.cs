@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Text;
 
@@ -9,47 +10,53 @@ namespace AdoNetClient
     {
         public Dictionary<string, QueryInformation> repository = new Dictionary<string, QueryInformation>();
         //List<(string text, string key, string query)> repository = new List<(string, string, string)>();
+
         public QueryRepository(IUserInteractor userInteractor)
         {
             FillRepository(userInteractor);
         }
-        private Func<ProcedureInformation> nullEqualsFuncProcedureInformation = () => null;
+
+        private Func<SqlParameter[]> nullEqualsFuncProcedureInformation = () => null;
         private void FillRepository(IUserInteractor userInteractor)
         {
             repository.Add("groups", new QueryInformation ("If you want to select all groups, write 'groups'",
-                DataOutputWays.executeReader,
+                CommandExecutionWay.executeReader,
+                CommandType.Text,
                 () =>
                 "SELECT g.[Name], g.[AverageScore], c.[Name], s.[Name] " +
             "FROM [dbo].[Group] g " +
             "JOIN [dbo].[Course] c ON c.Id = g.[CourseId] " +
             "JOIN [dbo].[Specialty] s ON s.Id = g.[SpecialtyId]", nullEqualsFuncProcedureInformation));
             repository.Add("students", new QueryInformation("If you want to select all students, write 'students'",
-                DataOutputWays.executeReader,
+                CommandExecutionWay.executeReader,
+                CommandType.Text,
                 () =>
                 "SELECT st.FirstName, st.LastName, g.[Name], st.[AverageScore] " +
             "FROM [dbo].[Student] st " +
             "JOIN [dbo].[Group] g ON g.Id = st.[GroupId]", nullEqualsFuncProcedureInformation));
             repository.Add("scores", new QueryInformation("If you want to select all students scores, write 'scores'",
-                DataOutputWays.executeReader,
+                CommandExecutionWay.executeReader,
+                CommandType.Text,
                 () =>
                 "SELECT st.FirstName, st.LastName, score.[Value] " +
             "FROM [dbo].[Student] st " +
             "JOIN [dbo].[Score] score ON score.StudentId = st.Id", nullEqualsFuncProcedureInformation));
             repository.Add("debts", new QueryInformation("If you want to see all students debts, write 'debts'",
-                DataOutputWays.executeProcedure,
+                CommandExecutionWay.executeReader,
+                CommandType.StoredProcedure,
                 () => "[dbo].[ShowDebts]", 
                 () =>
-                new ProcedureInformation(DataOutputWays.executeReader,
                 new SqlParameter[] { new SqlParameter("@maxFoursCount", userInteractor.ReadParameter("Write the maximum number of fours")),
-                new SqlParameter("@maxCountRetakes", userInteractor.ReadParameter("Write the maximum number of retakes"))})));
+                new SqlParameter("@maxCountRetakes", userInteractor.ReadParameter("Write the maximum number of retakes"))}));
             repository.Add("some students", new QueryInformation("If you want to some students, write 'some students'",
-                DataOutputWays.executeProcedure,
+                CommandExecutionWay.executeReader,
+                CommandType.StoredProcedure,
                 () => "[dbo].[ShowSomeStudents]",
                 () =>
-                new ProcedureInformation(DataOutputWays.executeReader,
-                new SqlParameter[] { new SqlParameter("@studentsCount", userInteractor.ReadParameter("Write students count")) })));
+                new SqlParameter[] { new SqlParameter("@studentsCount", userInteractor.ReadParameter("Write students count")) }));
             repository.Add("clever students", new QueryInformation ("If you want to select clever students, write 'clever students'",
-                DataOutputWays.executeReader,
+                CommandExecutionWay.executeReader,
+                CommandType.Text,
                 () =>
                 {
                     var maxFoursCount = userInteractor.ReadParameter("Write the maximum number of fours");

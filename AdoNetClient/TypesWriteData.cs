@@ -4,7 +4,7 @@ using System.Text;
 
 namespace AdoNetClient
 {
-    enum TypesWriteData
+    enum WriteTypeData
     {
         withSmallWindow,
         withBigWindow

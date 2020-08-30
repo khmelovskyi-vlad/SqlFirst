@@ -13,7 +13,7 @@ namespace AdoNetClient
             this.userInteractor = userInteractor;
         }
         IUserInteractor userInteractor;
-        public async Task RunSqlCli()
+        public async Task RunSqlClient()
         {
             while (true)
             {

@@ -30,7 +30,7 @@ namespace AdoNetClient
         //{
         //    Console.WriteLine();
         //}
-        public (string, DataOutputWays) ReadCommandInformation()
+        public CommandPrototype ReadCommandInformation()
         {
             WriteInstruction();
             List<StringBuilder> stringBuilders = new List<StringBuilder>();
@@ -41,22 +41,22 @@ namespace AdoNetClient
                 if ((key.Modifiers & ConsoleModifiers.Control) != 0 && (key.Modifiers & ConsoleModifiers.Shift) != 0 && key.Key == ConsoleKey.Enter)
                 {
                     Console.WriteLine();
-                    return (CreateSql(stringBuilder, stringBuilders), DataOutputWays.executeScalar);
+                    return (new CommandPrototype(CreateSql(stringBuilder, stringBuilders), CommandExecutionWay.executeScalar, System.Data.CommandType.Text));
                 }
                 else if(key.Modifiers == ConsoleModifiers.Control && key.Key == ConsoleKey.Enter)
                 {
                     Console.WriteLine();
-                    return (CreateSql(stringBuilder, stringBuilders), DataOutputWays.executeReader);
+                    return (new CommandPrototype(CreateSql(stringBuilder, stringBuilders), CommandExecutionWay.executeReader, System.Data.CommandType.Text));
                 }
                 else if ((key.Modifiers & ConsoleModifiers.Shift) != 0 && key.Key == ConsoleKey.Enter)
                 {
                     Console.WriteLine();
-                    return (CreateSql(stringBuilder, stringBuilders), DataOutputWays.executeNoQuery);
+                    return (new CommandPrototype(CreateSql(stringBuilder, stringBuilders), CommandExecutionWay.executeNoQuery, System.Data.CommandType.Text));
                 }
                 else if ((key.Modifiers & ConsoleModifiers.Control) != 0 && key.Key == ConsoleKey.P)
                 {
                     Console.WriteLine();
-                    return (CreateSql(stringBuilder, stringBuilders), DataOutputWays.executeProcedure);
+                    return (new CommandPrototype(CreateSql(stringBuilder, stringBuilders), SelectProcedureOutputWay(), System.Data.CommandType.StoredProcedure));
                 }
                 else if (key.Key == ConsoleKey.Enter)
                 {
@@ -82,6 +82,26 @@ namespace AdoNetClient
             Console.WriteLine("If you want to execute reader, press 'Control + Enter' at the end");
             Console.WriteLine("If you want to execute no query, press 'Shift + Enter' at the end");
             Console.WriteLine("If you want to execute a procedure, press 'Control + P' at the end");
+            Console.WriteLine("Enter commant");
+        }
+        private CommandExecutionWay SelectProcedureOutputWay()
+        {
+            Console.WriteLine("If this procedure output some information, click 'i'");
+            Console.WriteLine("If this procedure output a scalar, click 's'");
+            Console.WriteLine("If this procedure does not output anything, click something else");
+            var key = Console.ReadKey(true);
+            if (key.Key == ConsoleKey.I)
+            {
+                return CommandExecutionWay.executeReader;
+            }
+            else if (key.Key == ConsoleKey.S)
+            {
+                return CommandExecutionWay.executeScalar;
+            }
+            else
+            {
+                return CommandExecutionWay.executeNoQuery;
+            }
         }
         //private bool CheckIsProcedure()
         //{
@@ -135,13 +155,13 @@ namespace AdoNetClient
             WriteColumns(columns, typeWriteData);
             await WriteData(sqlDataReader, typeWriteData);
         }
-        private async Task WriteData(SqlDataReader sqlDataReader, TypesWriteData typeWriteData)
+        private async Task WriteData(SqlDataReader sqlDataReader, WriteTypeData typeWriteData)
         {
-            if (typeWriteData == TypesWriteData.withBigWindow)
+            if (typeWriteData == WriteTypeData.withBigWindow)
             {
                 await WriteDataWithBigWindow(sqlDataReader);
             }
-            else if (typeWriteData == TypesWriteData.withSmallWindow)
+            else if (typeWriteData == WriteTypeData.withSmallWindow)
             {
                 await WriteDataWithSmallWindow(sqlDataReader);
             }
@@ -161,26 +181,26 @@ namespace AdoNetClient
                 Console.WriteLine();
             }
         }
-        private void WriteColumns(ReadOnlyCollection<DbColumn> columns, TypesWriteData typeWriteData)
+        private void WriteColumns(ReadOnlyCollection<DbColumn> columns, WriteTypeData typeWriteData)
         {
-            if (typeWriteData == TypesWriteData.withBigWindow)
+            if (typeWriteData == WriteTypeData.withBigWindow)
             {
                 WriteColumnsWithBigWindow(columns);
             }
-            else if (typeWriteData == TypesWriteData.withSmallWindow)
+            else if (typeWriteData == WriteTypeData.withSmallWindow)
             {
                 WriteColumnsWithSmallWindow(columns);
             }
         }
-        private TypesWriteData FindTypeWriteData(ReadOnlyCollection<DbColumn> columns)
+        private WriteTypeData FindTypeWriteData(ReadOnlyCollection<DbColumn> columns)
         {
             if (Console.BufferWidth / columns.Count - 3 <= 0)
             {
-                return TypesWriteData.withSmallWindow;
+                return WriteTypeData.withSmallWindow;
             }
             else
             {
-                return TypesWriteData.withBigWindow;
+                return WriteTypeData.withBigWindow;
             }
         }
         private async Task WriteDataWithBigWindow(SqlDataReader sqlDataReader)
@@ -272,9 +292,9 @@ namespace AdoNetClient
         {
             Console.WriteLine(value);
         }
-        public ProcedureInformation FillProcedureInformation()
+        public SqlParameter[] ReadSqlParameters()
         {
-            return new ProcedureInformation(SelectProcedureOutputWay(), ReadParameters());
+            return ReadParameters();
         }
         private SqlParameter[] ReadParameters()
         {
@@ -294,25 +314,6 @@ namespace AdoNetClient
         {
             Console.WriteLine("Write parameter name");
             return Console.ReadLine();
-        }
-        private DataOutputWays SelectProcedureOutputWay()
-        {
-            Console.WriteLine("If this procedure output some information, click 'i'");
-            Console.WriteLine("If this procedure output a scalar, click 's'");
-            Console.WriteLine("If this procedure does not output anything, click something else");
-            var key = Console.ReadKey(true);
-            if (key.Key == ConsoleKey.I)
-            {
-                return DataOutputWays.executeReader;
-            }
-            else if (key.Key == ConsoleKey.S)
-            {
-                return DataOutputWays.executeScalar;
-            }
-            else
-            {
-                return DataOutputWays.executeNoQuery;
-            }
         }
         //private Type ReadParameterType()
         //{
@@ -389,7 +390,7 @@ namespace AdoNetClient
             }
         }
 
-        public SelectionModes SelectMode()
+        public SelectionMode SelectMode()
         {
             while (true)
             {
@@ -399,9 +400,9 @@ namespace AdoNetClient
                 switch (key.Key)
                 {
                     case ConsoleKey.P:
-                        return SelectionModes.Predefined;
+                        return SelectionMode.Predefined;
                     case ConsoleKey.N:
-                        return SelectionModes.Free;
+                        return SelectionMode.Free;
                 }
                 Console.WriteLine("Bed input, try again");
             }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Text;
 
@@ -7,27 +8,27 @@ namespace AdoNetClient
 {
     struct QueryInformation
     {
-        public QueryInformation(/*string key, */string suggestion, DataOutputWays outputWay, Func<string> funcQuery, Func<ProcedureInformation> funcProcedureInformation)
+        public QueryInformation(string suggestion, CommandExecutionWay commandExecutionWay, CommandType commandType,
+            Func<string> funcQuery, Func<SqlParameter[]> funcSqlParameters)
         {
-            //Key = key;
             Suggestion = suggestion;
-            OutputWay = outputWay;
-            //Query = funcQuery.Invoke();
+            CommandExecutionWay = commandExecutionWay;
             this.funcQuery = funcQuery;
-            this.funcProcedureInformation = funcProcedureInformation;
+            this.funcSqlParameters = funcSqlParameters;
+            CommandType = commandType;
         }
-        private Func<ProcedureInformation> funcProcedureInformation;
-        public ProcedureInformation ProcedureInformation
+        public string Suggestion;
+        public CommandExecutionWay CommandExecutionWay;
+        public CommandType CommandType;
+        private Func<SqlParameter[]> funcSqlParameters;
+        public SqlParameter[] SqlParameters
         {
-            get { return funcProcedureInformation.Invoke(); }
+            get { return funcSqlParameters.Invoke(); }
         }
         private Func<string> funcQuery;
         public string Query
         {
             get { return funcQuery.Invoke(); }
         }
-        //public string Key;
-        public string Suggestion;
-        public DataOutputWays OutputWay;
     }
 }
