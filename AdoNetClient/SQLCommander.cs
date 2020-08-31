@@ -15,26 +15,25 @@ namespace AdoNetClient
             this.userInteractor = userInteractor;
         }
         IUserInteractor userInteractor;
+
+        public AutoResetEvent autoResetCommand = new AutoResetEvent(false);
         public async Task RunCommandSession(SqlConnection connection, SelectionMode mode)
         {
+            var cancellationTokenSource = new CancellationTokenSource();
+            Task task;
             if (mode == SelectionMode.Free)
             {
                 var commandInformation = userInteractor.ReadCommandInformation();
-                await RunCommand(commandInformation.Sql, connection, commandInformation.CommandExecutionWay, commandInformation.CommandType, null);
+                task = RunCommand(commandInformation.Sql, connection, commandInformation.CommandExecutionWay, commandInformation.CommandType,
+                    userInteractor.ReadSqlParameters(), cancellationTokenSource.Token);
             }
-            else if (mode == SelectionMode.Predefined)
+            else/* if (mode == SelectionMode.Predefined)*/
             {
                 var queryInformation = FindQueryInformation();
-                await RunCommand(queryInformation.Query, connection, queryInformation.CommandExecutionWay, queryInformation.CommandType, queryInformation.SqlParameters);
+                task = RunCommand(queryInformation.Query, connection, queryInformation.CommandExecutionWay, queryInformation.CommandType, queryInformation.SqlParameters,
+                    cancellationTokenSource.Token);
             }
-        }
-        private async Task RunCommand(string sql, SqlConnection connection, CommandExecutionWay commandExecutionWay, CommandType commandType, SqlParameter[] sqlParameters)
-        {
-            using (SqlCommand sqlCommand = new SqlCommand(sql, connection))
-            {
-                sqlCommand.CommandTimeout = int.MaxValue;
-                await ExecuteCommand(sqlCommand, commandExecutionWay, commandType, sqlParameters);
-            }
+            userInteractor.SelectContinuation(cancellationTokenSource, autoResetCommand);
         }
         private QueryInformation FindQueryInformation()
         {
@@ -42,86 +41,80 @@ namespace AdoNetClient
             userInteractor.ShowSuggestions(queryRepository.repository);
             return userInteractor.SelectQuery(queryRepository.repository);
         }
-        private async Task ExecuteCommand(SqlCommand sqlCommand, CommandExecutionWay commandExecutionWay, CommandType commandType, SqlParameter[] sqlParameters)
+        private async Task RunCommand(string sql, SqlConnection connection, CommandExecutionWay commandExecutionWay, CommandType commandType, 
+            SqlParameter[] sqlParameters, CancellationToken cancellationToken)
         {
+            using (SqlCommand sqlCommand = new SqlCommand(sql, connection))
+            {
+                sqlCommand.CommandTimeout = int.MaxValue;
+                await ExecuteCommand(sqlCommand, commandExecutionWay, commandType, sqlParameters, cancellationToken);
+            }
+            autoResetCommand.Set();
+        }
+        private async Task ExecuteCommand(SqlCommand sqlCommand, CommandExecutionWay commandExecutionWay, CommandType commandType, 
+            SqlParameter[] sqlParameters, CancellationToken cancellationToken)
+        {
+            sqlCommand.CommandType = commandType;
+            AddParameters(sqlParameters, sqlCommand);
             if (commandType == CommandType.Text)
             {
                 switch (commandExecutionWay)
                 {
                     case CommandExecutionWay.executeNoQuery:
-                        await RunExecutionExecuteNonQuery(sqlCommand);
+                        await RunExecutionExecuteNonQuery(sqlCommand, cancellationToken);
                         break;
                     case CommandExecutionWay.executeReader:
-                        await RunExecutionReader(sqlCommand);
+                        await RunExecutionReader(sqlCommand, cancellationToken);
                         break;
                     case CommandExecutionWay.executeScalar:
-                        await RunExecutionExecuteeScalar(sqlCommand);
+                        await RunExecutionExecuteeScalar(sqlCommand, cancellationToken);
                         break;
                 }
             }
             else if(commandType == CommandType.StoredProcedure)
             {
-                await RunProcedure(sqlCommand, commandExecutionWay, sqlParameters);
+                await RunProcedure(sqlCommand, commandExecutionWay, sqlParameters, cancellationToken);
             }
         }
-        private async Task RunExecutionReader(SqlCommand sqlCommand)
+        private async Task RunExecutionReader(SqlCommand sqlCommand, CancellationToken cancellationToken)
         {
-            //var cancellationTokenSource = new CancellationTokenSource();
-            //cancellationTokenSource.Cancel();
-            using (SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync(/*cancellationTokenSource.Token*/))
+            using (SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync(cancellationToken))
             {
-                await userInteractor.WriteCommandResult(sqlDataReader);
+                await userInteractor.WriteCommandResult(sqlDataReader, cancellationToken);
             }
         }
-        private async Task RunExecutionExecuteNonQuery(SqlCommand sqlCommand)
+        private async Task RunExecutionExecuteNonQuery(SqlCommand sqlCommand, CancellationToken cancellationToken)
         {
-            var rowCount = await sqlCommand.ExecuteNonQueryAsync();
+            var rowCount = await sqlCommand.ExecuteNonQueryAsync(cancellationToken);
             userInteractor.WriteCountAffectedRows(rowCount);
         }
-        private async Task RunExecutionExecuteeScalar(SqlCommand sqlCommand)
+        private async Task RunExecutionExecuteeScalar(SqlCommand sqlCommand, CancellationToken cancellationToken)
         {
-            var scalar = await sqlCommand.ExecuteScalarAsync();
+            var scalar = await sqlCommand.ExecuteScalarAsync(cancellationToken);
             userInteractor.WriteScalar(scalar);
         }
-        private async Task RunProcedure(SqlCommand sqlCommand, CommandExecutionWay commandExecutionWay, SqlParameter[] sqlParameters)
+        private void AddParameters(SqlParameter[] sqlParameters, SqlCommand sqlCommand)
         {
-            //var par = sqlCommand.CreateParameter();
-            sqlCommand.CommandType = System.Data.CommandType.StoredProcedure;
-            if (sqlParameters == null)
-            {
-                sqlParameters = userInteractor.ReadSqlParameters();
-            }
             if (sqlParameters != null)
             {
                 sqlCommand.Parameters.AddRange(sqlParameters);
             }
+        }
+        private async Task RunProcedure(SqlCommand sqlCommand, CommandExecutionWay commandExecutionWay, SqlParameter[] sqlParameters, CancellationToken cancellationToken)
+        {
             switch (commandExecutionWay)
             {
                 case CommandExecutionWay.executeNoQuery:
-                    await RunExecutionExecuteNonQuery(sqlCommand);
+                    await RunExecutionExecuteNonQuery(sqlCommand, cancellationToken);
                     break;
                 case CommandExecutionWay.executeReader:
-                    await RunExecutionReader(sqlCommand);
+                    await RunExecutionReader(sqlCommand, cancellationToken);
                     break;
                 case CommandExecutionWay.executeScalar:
-                    await RunExecutionExecuteeScalar(sqlCommand);
+                    await RunExecutionExecuteeScalar(sqlCommand, cancellationToken);
                     break;
             }
-            //SqlParameter par = new SqlParameter("@randomString", "".PadLeft(200));
-            //par.Direction = System.Data.ParameterDirection.InputOutput;
-            //sqlCommand.Parameters.Add(new SqlParameter("@minLength", Console.ReadLine()));
-            //sqlCommand.Parameters.Add(new SqlParameter("@maxLength", Console.ReadLine()));
-            //sqlCommand.Parameters.Add(new SqlParameter("@chars", "qwerfdvbhyun"));
-            //sqlCommand.Parameters.Add(par);
-            //await sqlCommand.ExecuteNonQueryAsync();
-            //var s = sqlCommand.Parameters["@randomString"].Value;
-            //var ss = sqlCommand.Parameters["@randomString"].SqlValue;
-            //var sss = sqlCommand.Parameters["@randomString"].Value.ToString();
-            //Console.WriteLine(sqlCommand.Parameters["@randomString"].Value);
-            ////using (SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync())
-            ////{
-            ////    userInteractor.WriteCommandResult(sqlDataReader);
-            ////}[PickRandomStringg]
+            userInteractor.WriteParametersResult(sqlCommand.Parameters);
         }
     }
 }

@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AdoNetClient
@@ -135,9 +137,10 @@ namespace AdoNetClient
                     if (stringBuilders.Count > 0)
                     {
                         stringBuilder = stringBuilders.Last();
+                        stringBuilder.Remove(stringBuilder.Length - 1, 1);
                         stringBuilders.RemoveAt(stringBuilders.Count() - 1);
                         Console.CursorTop = Console.CursorTop - 1;
-                        Console.CursorLeft = stringBuilder.Length - 1;
+                        Console.CursorLeft = stringBuilder.Length;
                     }
                 }
                 else
@@ -148,31 +151,31 @@ namespace AdoNetClient
             }
             return stringBuilder;
         }
-        public async Task WriteCommandResult(SqlDataReader sqlDataReader)
+        public async Task WriteCommandResult(SqlDataReader sqlDataReader, CancellationToken cancellationTokenSource)
         {
             var columns = sqlDataReader.GetColumnSchema();
             var typeWriteData = FindTypeWriteData(columns);
             WriteColumns(columns, typeWriteData);
-            await WriteData(sqlDataReader, typeWriteData);
+            await WriteData(sqlDataReader, typeWriteData, cancellationTokenSource);
         }
-        private async Task WriteData(SqlDataReader sqlDataReader, WriteTypeData typeWriteData)
+        private async Task WriteData(SqlDataReader sqlDataReader, WriteTypeData typeWriteData, CancellationToken cancellationTokenSource)
         {
             if (typeWriteData == WriteTypeData.withBigWindow)
             {
-                await WriteDataWithBigWindow(sqlDataReader);
+                await WriteDataWithBigWindow(sqlDataReader, cancellationTokenSource);
             }
             else if (typeWriteData == WriteTypeData.withSmallWindow)
             {
-                await WriteDataWithSmallWindow(sqlDataReader);
+                await WriteDataWithSmallWindow(sqlDataReader, cancellationTokenSource);
             }
         }
-        private async Task WriteDataWithSmallWindow(SqlDataReader sqlDataReader)
+        private async Task WriteDataWithSmallWindow(SqlDataReader sqlDataReader, CancellationToken cancellationTokenSource)
         {
             while (await sqlDataReader.ReadAsync())
             {
                 for (int i = 0; i < sqlDataReader.VisibleFieldCount; i++)
                 {
-                    Console.Write($"{await sqlDataReader.GetFieldValueAsync<object>(i),-20}");
+                    Console.Write($"{await sqlDataReader.GetFieldValueAsync<object>(i, cancellationTokenSource),-20}");
                     if (i < sqlDataReader.VisibleFieldCount - 1)
                     {
                         Console.Write(" | ");
@@ -203,14 +206,19 @@ namespace AdoNetClient
                 return WriteTypeData.withBigWindow;
             }
         }
-        private async Task WriteDataWithBigWindow(SqlDataReader sqlDataReader)
+        private async Task WriteDataWithBigWindow(SqlDataReader sqlDataReader, CancellationToken cancellationTokenSource)
         {
             while (await sqlDataReader.ReadAsync())
             {
                 var dataNames = new string[sqlDataReader.VisibleFieldCount];
                 for (int i = 0; i < dataNames.Length; i++)
                 {
-                    dataNames[i] = (await sqlDataReader.GetFieldValueAsync<object>(i)).ToString();
+                    var task = sqlDataReader.GetFieldValueAsync<object>(i, cancellationTokenSource);
+                    if (task.IsCanceled)
+                    {
+                        return;
+                    }
+                    dataNames[i] = (await task).ToString();
                 }
                 WriteColumns(dataNames);
                 Console.WriteLine();
@@ -306,9 +314,157 @@ namespace AdoNetClient
                 sqlParameter.ParameterName = ReadParameterName();
                 Console.WriteLine("Write parameter value");
                 sqlParameter.Value = Console.ReadLine();
+                if (СheckNeed("If you want to select the type, click 'Enter'"))
+                {
+                    sqlParameter.SqlDbType = ReadType();
+                }
+                if (СheckNeed("If you want to select the size, click 'Enter'"))
+                {
+                    sqlParameter.Size = ReadParameterSize();
+                }
                 sqlParameters[i] = sqlParameter;
             }
             return sqlParameters;
+        }
+        private int ReadParameterSize()
+        {
+            while (true)
+            {
+                try
+                {
+                    Console.WriteLine("Write the size");
+                    var line = Console.ReadLine();
+                    var size = Convert.ToInt32(line);
+                    if (size >= 0)
+                    {
+                        return size;
+                    }
+                    else
+                    {
+                        Console.WriteLine("The size can't be less than 0");
+                    }
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("Bad input, try again");
+                }
+
+            }
+        }
+        private bool СheckNeed(string message)
+        {
+            Console.WriteLine(message);
+            if (Console.ReadKey(true).Key == ConsoleKey.Enter)
+            {
+                return true;
+            }
+            return false;
+        }
+        private void WriteInstructionForFindType()
+        {
+            Console.WriteLine("If you want to select the BigInt type, click 'A'");
+            Console.WriteLine("If you want to select the Binary type, click 'B'");
+            Console.WriteLine("If you want to select the Bit type, click 'C'");
+            Console.WriteLine("If you want to select the Char type, click 'D'");
+            Console.WriteLine("If you want to select the DateTime type, click 'E'");
+            Console.WriteLine("If you want to select the Decimal type, click 'F'");
+            Console.WriteLine("If you want to select the Float type, click 'G'");
+            Console.WriteLine("If you want to select the Image type, click 'H'");
+            Console.WriteLine("If you want to select the Int type, click 'I'");
+            Console.WriteLine("If you want to select the Money type, click 'J'");
+            Console.WriteLine("If you want to select the NChar type, click 'K'");
+            Console.WriteLine("If you want to select the NText type, click 'L'");
+            Console.WriteLine("If you want to select the NVarChar type, click 'M'");
+            Console.WriteLine("If you want to select the Real type, click 'N'");
+            Console.WriteLine("If you want to select the UniqueIdentifier type, click 'O'");
+            Console.WriteLine("If you want to select the SmallDateTime type, click 'P'");
+            Console.WriteLine("If you want to select the SmallInt type, click 'Q'");
+            Console.WriteLine("If you want to select the SmallMoney type, click 'R'");
+            Console.WriteLine("If you want to select the Text type, click 'S'");
+            Console.WriteLine("If you want to select the Timestamp type, click 'T'");
+            Console.WriteLine("If you want to select the TinyInt type, click 'U'");
+            Console.WriteLine("If you want to select the VarBinary type, click 'V'");
+            Console.WriteLine("If you want to select the VarChar type, click 'W'");
+            Console.WriteLine("If you want to select the Variant type, click 'X'");
+            Console.WriteLine("If you want to select the Xml type, click 'Y'");
+            Console.WriteLine("If you want to select the Udt type, click 'Z'");
+            Console.WriteLine("If you want to select the Structured type, click 'Enter'");
+            Console.WriteLine("If you want to select the Date type, click 'Delete'");
+            Console.WriteLine("If you want to select the Time type, click 'Backspace'");
+            Console.WriteLine("If you want to select the DateTime2 type, click 'Escape'");
+            Console.WriteLine("If you want to select the DateTimeOffset type, click 'Tab'");
+        }
+        private SqlDbType ReadType()
+        {
+            WriteInstructionForFindType();
+            while (true)
+            {
+                switch (Console.ReadKey(true).Key)
+                {
+                    case ConsoleKey.A:
+                        return SqlDbType.BigInt;
+                    case ConsoleKey.B:
+                        return SqlDbType.Binary;
+                    case ConsoleKey.C:
+                        return SqlDbType.Bit;
+                    case ConsoleKey.D:
+                        return SqlDbType.Char;
+                    case ConsoleKey.E:
+                        return SqlDbType.DateTime;
+                    case ConsoleKey.F:
+                        return SqlDbType.Decimal;
+                    case ConsoleKey.G:
+                        return SqlDbType.Float;
+                    case ConsoleKey.H:
+                        return SqlDbType.Image;
+                    case ConsoleKey.I:
+                        return SqlDbType.Int;
+                    case ConsoleKey.J:
+                        return SqlDbType.Money;
+                    case ConsoleKey.K:
+                        return SqlDbType.NChar;
+                    case ConsoleKey.L:
+                        return SqlDbType.NText;
+                    case ConsoleKey.M:
+                        return SqlDbType.NVarChar;
+                    case ConsoleKey.N:
+                        return SqlDbType.Real;
+                    case ConsoleKey.O:
+                        return SqlDbType.UniqueIdentifier;
+                    case ConsoleKey.P:
+                        return SqlDbType.SmallDateTime;
+                    case ConsoleKey.Q:
+                        return SqlDbType.SmallInt;
+                    case ConsoleKey.R:
+                        return SqlDbType.SmallMoney;
+                    case ConsoleKey.S:
+                        return SqlDbType.Text;
+                    case ConsoleKey.T:
+                        return SqlDbType.Timestamp;
+                    case ConsoleKey.U:
+                        return SqlDbType.TinyInt;
+                    case ConsoleKey.V:
+                        return SqlDbType.VarBinary;
+                    case ConsoleKey.W:
+                        return SqlDbType.VarChar;
+                    case ConsoleKey.X:
+                        return SqlDbType.Variant;
+                    case ConsoleKey.Y:
+                        return SqlDbType.Xml;
+                    case ConsoleKey.Z:
+                        return SqlDbType.Udt;
+                    case ConsoleKey.Enter:
+                        return SqlDbType.Structured;
+                    case ConsoleKey.Delete:
+                        return SqlDbType.Date;
+                    case ConsoleKey.Backspace:
+                        return SqlDbType.Time;
+                    case ConsoleKey.Escape:
+                        return SqlDbType.DateTime2;
+                    case ConsoleKey.Tab:
+                        return SqlDbType.DateTimeOffset;
+                }
+            }
         }
         private string ReadParameterName()
         {
@@ -443,5 +599,28 @@ namespace AdoNetClient
             Console.WriteLine(ex.Message);
         }
 
+        public void WriteParametersResult(SqlParameterCollection sqlParameterCollection)
+        {
+            foreach (SqlParameter parameter in sqlParameterCollection)
+            {
+                if (parameter.Direction == ParameterDirection.InputOutput || parameter.Direction == ParameterDirection.Output || parameter.Direction == ParameterDirection.ReturnValue)
+                {
+                    Console.WriteLine($"{parameter.ParameterName} = {parameter.Value}");
+                }
+            }
+        }
+        public void SelectContinuation(CancellationTokenSource cancellationTokenSource, AutoResetEvent autoResetCommand)
+        {
+            Console.WriteLine("If you want to stop the operation, click 'b'");
+            if (Console.ReadKey(true).Key == ConsoleKey.B)
+            {
+                cancellationTokenSource.Cancel(false);
+                autoResetCommand.WaitOne();
+            }
+            else
+            {
+                autoResetCommand.WaitOne();
+            }
+        }
     }
 }

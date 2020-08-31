@@ -24,9 +24,13 @@ namespace DataSetFirst
             using (SqlConnection sqlConnection = new SqlConnection(sqlConnectionStringBuilder.ConnectionString))
             {
                 SqlDataAdapter sqlDataAdapter = new SqlDataAdapter();
+                //sqlDataAdapter.TableMappings.Add("Table", "Suppliers");
                 sqlDataAdapter.SelectCommand = new SqlCommand("SELECT TOP 10 *" +
                     "FROM [dbo].[Student]", sqlConnection);
                 sqlDataAdapter.Fill(studentTable);
+                //sqlDataAdapter.Update
+                //dataSet.Merge();
+                //dataSet.Container
             }
             var rows = studentTable.Select();
             foreach (var row in rows)

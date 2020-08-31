@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AdoNetClient
@@ -14,7 +15,7 @@ namespace AdoNetClient
         //void WriteLine();
         SelectionMode SelectMode();
         CommandPrototype ReadCommandInformation();
-        Task WriteCommandResult(SqlDataReader sqlDataReader);
+        Task WriteCommandResult(SqlDataReader sqlDataReader, CancellationToken cancellationTokenSource);
         void WriteCountAffectedRows(int rowsCount);
         void WriteScalar(object value);
         SqlParameter[] ReadSqlParameters();
@@ -22,5 +23,7 @@ namespace AdoNetClient
         QueryInformation SelectQuery(Dictionary<string, QueryInformation> repository);
         string ReadParameter(string message);
         void WriteExceptionMessage(Exception ex);
+        void WriteParametersResult(SqlParameterCollection sqlParameterCollection);
+        void SelectContinuation(CancellationTokenSource cancellationTokenSource, AutoResetEvent autoResetCommand);
     }
 }
