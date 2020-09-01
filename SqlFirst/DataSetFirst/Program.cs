@@ -12,6 +12,8 @@ namespace DataSetFirst
     {
         static void Main(string[] args)
         {
+            DataSetMaster dataSetMaster = new DataSetMaster(new ConsoleUserInteractor());
+            dataSetMaster.Run();
             DataSet dataSet = new DataSet();
             var studentTable = dataSet.Tables.Add("Student");
             var id = studentTable.Columns.Add("Id", typeof(Guid));
