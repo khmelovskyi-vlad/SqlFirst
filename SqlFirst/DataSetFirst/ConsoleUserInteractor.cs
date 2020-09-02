@@ -182,5 +182,14 @@ namespace DataSetFirst
                 Console.WriteLine(item.Value.Suggestion);
             }
         }
+        public bool CheckNeedAddToDataBase(string message)
+        {
+            Console.WriteLine(message);
+            if (Console.ReadKey(true).Key == ConsoleKey.Enter)
+            {
+                return true;
+            }
+            return false;
+        }
     }
 }

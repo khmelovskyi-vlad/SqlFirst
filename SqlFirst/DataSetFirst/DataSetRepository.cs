@@ -19,37 +19,37 @@ namespace DataSetFirst
         {
             DataSet dataSet = new DataSet();
             var student = dataSet.Tables.Add("Student");
+            student.PrimaryKey = new DataColumn[] { student.Columns.Add("Id", typeof(Guid)) };
             student.Columns.Add("FirstName", typeof(string));
             student.Columns.Add("LastName", typeof(string));
             student.Columns.Add("GroupId", typeof(Guid));
             student.Columns.Add("AverageScore", typeof(int));
-            student.PrimaryKey = new DataColumn[] { student.Columns.Add("Id", typeof(Guid)) };
 
             var group = dataSet.Tables.Add("Group");
+            group.PrimaryKey = new DataColumn[] { group.Columns.Add("Id", typeof(Guid)) };
             group.Columns.Add("Name", typeof(string));
             group.Columns.Add("AverageScore", typeof(int));
             group.Columns.Add("CourseId", typeof(Guid));
             group.Columns.Add("SpecialtyId", typeof(Guid));
-            group.PrimaryKey = new DataColumn[] { group.Columns.Add("Id", typeof(Guid)) };
 
             var course = dataSet.Tables.Add("Course");
-            course.Columns.Add("Name", typeof(int));
             course.PrimaryKey = new DataColumn[] { course.Columns.Add("Id", typeof(Guid)) };
+            course.Columns.Add("Name", typeof(int));
 
             var specialty = dataSet.Tables.Add("Specialty");
-            specialty.Columns.Add("Name", typeof(string));
             specialty.PrimaryKey = new DataColumn[] { specialty.Columns.Add("Id", typeof(Guid)) };
+            specialty.Columns.Add("Name", typeof(string));
 
             var subject = dataSet.Tables.Add("Subject");
-            subject.Columns.Add("Name", typeof(string));
             subject.PrimaryKey = new DataColumn[] { subject.Columns.Add("Id", typeof(Guid)) };
+            subject.Columns.Add("Name", typeof(string));
 
             var score = dataSet.Tables.Add("Score");
+            score.PrimaryKey = new DataColumn[] { score.Columns.Add("Id", typeof(Guid)) };
             score.Columns.Add("Value", typeof(int));
             score.Columns.Add("SubjectId", typeof(Guid));
             score.Columns.Add("StudentId", typeof(Guid));
             score.Columns.Add("CourseId", typeof(Guid));
-            score.PrimaryKey = new DataColumn[] { score.Columns.Add("Id", typeof(Guid)) };
 
             var subjectCourse = dataSet.Tables.Add("SubjectCourse");
             subjectCourse.PrimaryKey = new DataColumn[] { subjectCourse.Columns.Add("SubjectId", typeof(Guid)), subjectCourse.Columns.Add("CourseId", typeof(Guid))};
@@ -57,12 +57,12 @@ namespace DataSetFirst
             var subjectSpecialty = dataSet.Tables.Add("SubjectSpecialty");
             subjectSpecialty.PrimaryKey = new DataColumn[] { subjectSpecialty.Columns.Add("SubjectId", typeof(Guid)), subjectSpecialty.Columns.Add("SpecialtyId", typeof(Guid)) };
 
-            dataSet.Relations.Add(dataSet.Tables["Group"].Columns["Id"], dataSet.Tables["Student"].Columns["GroupId"]);
-            dataSet.Relations.Add(dataSet.Tables["Course"].Columns["Id"], dataSet.Tables["Group"].Columns["CourseId"]);
-            dataSet.Relations.Add(dataSet.Tables["Specialty"].Columns["Id"], dataSet.Tables["Group"].Columns["SpecialtyId"]);
-            dataSet.Relations.Add(dataSet.Tables["Subject"].Columns["Id"], dataSet.Tables["Score"].Columns["SubjectId"]);
-            dataSet.Relations.Add(dataSet.Tables["Student"].Columns["Id"], dataSet.Tables["Score"].Columns["StudentId"]);
-            dataSet.Relations.Add(dataSet.Tables["Course"].Columns["Id"], dataSet.Tables["Score"].Columns["CourseId"]);
+            dataSet.Relations.Add("GroupId-StudentId", dataSet.Tables["Group"].Columns["Id"], dataSet.Tables["Student"].Columns["GroupId"]);
+            dataSet.Relations.Add("CourseId-GroupId", dataSet.Tables["Course"].Columns["Id"], dataSet.Tables["Group"].Columns["CourseId"]);
+            dataSet.Relations.Add("SpecialtyId-GroupSpecialtyId", dataSet.Tables["Specialty"].Columns["Id"], dataSet.Tables["Group"].Columns["SpecialtyId"]);
+            dataSet.Relations.Add("SubjectId-ScoreSubjectId", dataSet.Tables["Subject"].Columns["Id"], dataSet.Tables["Score"].Columns["SubjectId"]);
+            dataSet.Relations.Add("StudentId-ScoreStudentId", dataSet.Tables["Student"].Columns["Id"], dataSet.Tables["Score"].Columns["StudentId"]);
+            dataSet.Relations.Add("CourseId-ScoreCourseId", dataSet.Tables["Course"].Columns["Id"], dataSet.Tables["Score"].Columns["CourseId"]);
             FillMyDataSet(dataSet);
 
             Repository.Add("first course", new DataSetPrototype(dataSet, "If you want to take a data set with information for first course, write 'first course'"));
@@ -77,9 +77,22 @@ namespace DataSetFirst
                     sqlConnection.Open();
                     SqlDataAdapter sqlDataAdapter = new SqlDataAdapter();
 
-                    /*sqlDataAdapter.SelectCommand = new SqlCommand("SELECT * " +
-                        "FROM [dbo].[Course] ", sqlConnection);
-                    sqlDataAdapter.Fill(dataSet.Tables["Course"]);
+                    //SqlCommandBuilder commandBuilder = new SqlCommandBuilder(sqlDataAdapter);
+                    //sqlDataAdapter.SelectCommand = new SqlCommand("SELECT * " +
+                    //    "FROM [dbo].[Course] ", sqlConnection);
+                    //sqlDataAdapter.Fill(dataSet.Tables["Course"]);
+
+                    ////sqlDataAdapter.SelectCommand = new SqlCommand("SELECT sp.Id, sp.[Name] " +
+                    ////    "FROM [dbo].[Specialty] sp " +
+                    ////    "JOIN [dbo].[Group] g ON g.SpecialtyId = sp.Id " +
+                    ////    "JOIN [dbo].[Course] c ON c.Id = g.CourseId " +
+                    ////    "WHERE c.[Name] = 1", sqlConnection);
+                    ////sqlDataAdapter.Fill(dataSet.Tables["Specialty"]);
+
+                    //dataSet.Tables["Course"].Rows.Add(Guid.NewGuid(), 10);
+                    ////dataSet.Tables["Specialty"].Rows.Add(Guid.NewGuid(), "100000");
+
+                    //var s = sqlDataAdapter.Update(dataSet.Tables["Course"]);
 
                     //sqlDataAdapter.InsertCommand = new SqlCommand("INSERT INTO [dbo].[Course] " +
                     //    "(Id, Name) " +
@@ -88,25 +101,28 @@ namespace DataSetFirst
                     //    "(NEWID(), 12)", sqlConnection);
                     //sqlDataAdapter.InsertCommand.Parameters.AddWithValue("@par1", Guid.NewGuid());
                     //sqlDataAdapter.InsertCommand.Parameters.AddWithValue("@par2", 11);
-                    SqlCommandBuilder commandBuilder = new SqlCommandBuilder(sqlDataAdapter);
-                    //sqlDataAdapter.InsertCommand.ExecuteNonQuery();
-                    dataSet.Tables["Course"].Rows[2].Delete();
-                    //dataSet.Tables["Course"].Rows.Remove(l);
-                    //dataSet.Tables["Course"].Rows.Add(10, Guid.NewGuid());
-                    //dataSet.Tables["Course"].Rows.Add(11, Guid.NewGuid());
-                    //dataSet.Tables["Course"].Rows.Add(12, Guid.NewGuid());
-                    var s = sqlDataAdapter.Update(dataSet.Tables["Course"]);
-                    foreach (DataTable table in dataSet.Tables)
-                    {
-                        foreach (DataRow row in table.Rows)
-                        {
-                            foreach (var item in row.ItemArray)
-                            {
-                                Console.Write($"{item,20} |");
-                            }
-                            Console.WriteLine();
-                        }
-                    }*/
+
+                    ////sqlDataAdapter.InsertCommand.ExecuteNonQuery();
+                    //dataSet.Tables["Course"].Rows[1].ItemArray = new object[] { 105, Guid.NewGuid() };
+
+                    ////dataSet.Tables["Course"].Rows[2].Delete();
+
+                    ////dataSet.Tables["Course"].Rows.Add(10, Guid.NewGuid());
+
+                    ////commandBuilder.GetInsertCommand();
+                    //var s = sqlDataAdapter.Update(dataSet.Tables["Course"]);
+                    //foreach (DataTable table in dataSet.Tables)
+                    //{
+                    //    foreach (DataRow row in table.Rows)
+                    //    {
+                    //        foreach (var item in row.ItemArray)
+                    //        {
+                    //            Console.Write($"{item,20} |");
+                    //        }
+                    //        Console.WriteLine();
+                    //    }
+                    //}
+
 
                     sqlDataAdapter.SelectCommand = new SqlCommand("SELECT * " +
                         "FROM [dbo].[Course] " +
@@ -140,7 +156,7 @@ namespace DataSetFirst
                         "JOIN [dbo].[Course] c ON c.Id = g.CourseId " +
                         "WHERE c.[Name] = 1", sqlConnection);
                     sqlDataAdapter.Fill(dataSet.Tables["Student"]);
-                    
+
                     sqlDataAdapter.SelectCommand = new SqlCommand("SELECT sc.Id, sc.[Value], sc.[SubjectId], sc.[StudentId], sc.[CourseId] " +
                         "FROM [dbo].[Score] sc " +
                         "JOIN [dbo].[Course] c ON c.Id = sc.CourseId " +
@@ -152,7 +168,7 @@ namespace DataSetFirst
                         "JOIN [dbo].[Course] c ON c.Id = sc.CourseId " +
                         "WHERE c.[Name] = 1", sqlConnection);
                     sqlDataAdapter.Fill(dataSet.Tables["SubjectCourse"]);
-                    
+
                     sqlDataAdapter.SelectCommand = new SqlCommand("SELECT subSpec.SubjectId, subSpec.SpecialtyId " +
                         "FROM [dbo].[SubjectSpecialty] subSpec " +
                         "JOIN [dbo].[Specialty] sp ON sp.Id = subSpec.SpecialtyId " +
@@ -160,7 +176,52 @@ namespace DataSetFirst
                         "JOIN [dbo].[Course] c ON c.Id = g.CourseId " +
                         "WHERE c.[Name] = 1", sqlConnection);
                     sqlDataAdapter.Fill(dataSet.Tables["SubjectSpecialty"]);
+
+                    //var resRows = from sub in dataSet.Tables["Subject"].AsEnumerable()
+                    //          join subCo in dataSet.Tables["SubjectCourse"].AsEnumerable() on Guid.Parse(sub["Id"].ToString()) equals Guid.Parse(subCo["SubjectId"].ToString())
+                    //          join subSpec in dataSet.Tables["SubjectSpecialty"].AsEnumerable() on Guid.Parse(sub["Id"].ToString()) equals Guid.Parse(subSpec["SubjectId"].ToString())
+                    //          select new
+                    //          {
+                    //              subId = sub["Id"],
+                    //              specId = subSpec["SpecialtyId"],
+                    //              coId = subCo["CourseId"]
+                    //          };
+                    //foreach (var resRow in resRows)
+                    //{
+                    //    Console.Write(resRow.subId);
+                    //    Console.Write(resRow.specId);
+                    //    Console.Write(resRow.coId);
+                    //    Console.WriteLine();
+                    //}
+                    //Console.ReadKey();
                 });
+            //dataSet.Tables["Course"].Rows.Add(10, Guid.NewGuid());
+            //sqlCommander.Run(sqlConnectionStringBuilder,
+            //    (sqlConnection) =>
+            //    {
+            //        sqlConnection.Open();
+            //        SqlDataAdapter sqlDataAdapter = new SqlDataAdapter();
+                    
+            //        sqlDataAdapter.SelectCommand = new SqlCommand("SELECT * " +
+            //            "FROM [dbo].[Course] ", sqlConnection);
+
+            //        SqlCommandBuilder commandBuilder = new SqlCommandBuilder(sqlDataAdapter);
+            //        dataSet.Tables["Course"].Rows.Add(12, Guid.NewGuid());
+            //        dataSet.AcceptChanges();
+
+            //        var s = sqlDataAdapter.Update(dataSet.Tables["Course"]);
+            //        foreach (DataTable table in dataSet.Tables)
+            //        {
+            //            foreach (DataRow row in table.Rows)
+            //            {
+            //                foreach (var item in row.ItemArray)
+            //                {
+            //                    Console.Write($"{item,20} |");
+            //                }
+            //                Console.WriteLine();
+            //            }
+            //        }
+            //    });
         }
         private static SqlConnectionStringBuilder GetSqlConnectionStringBuilder()
         {
