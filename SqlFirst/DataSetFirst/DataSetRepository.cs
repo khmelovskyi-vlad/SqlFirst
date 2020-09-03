@@ -63,11 +63,61 @@ namespace DataSetFirst
             dataSet.Relations.Add("SubjectId-ScoreSubjectId", dataSet.Tables["Subject"].Columns["Id"], dataSet.Tables["Score"].Columns["SubjectId"]);
             dataSet.Relations.Add("StudentId-ScoreStudentId", dataSet.Tables["Student"].Columns["Id"], dataSet.Tables["Score"].Columns["StudentId"]);
             dataSet.Relations.Add("CourseId-ScoreCourseId", dataSet.Tables["Course"].Columns["Id"], dataSet.Tables["Score"].Columns["CourseId"]);
-            FillMyDataSet(dataSet);
+            FillMyDataSet(dataSet, 1);
 
             Repository.Add("first course", new DataSetPrototype(dataSet, "If you want to take a data set with information for first course, write 'first course'"));
+
+            DataSet dataSet2 = new DataSet();
+            var student2 = dataSet2.Tables.Add("Student");
+            student2.PrimaryKey = new DataColumn[] { student2.Columns.Add("Id", typeof(Guid)) };
+            student2.Columns.Add("FirstName", typeof(string));
+            student2.Columns.Add("LastName", typeof(string));
+            student2.Columns.Add("GroupId", typeof(Guid));
+            student2.Columns.Add("AverageScore", typeof(int));
+
+            var group2 = dataSet2.Tables.Add("Group");
+            group2.PrimaryKey = new DataColumn[] { group2.Columns.Add("Id", typeof(Guid)) };
+            group2.Columns.Add("Name", typeof(string));
+            group2.Columns.Add("AverageScore", typeof(int));
+            group2.Columns.Add("CourseId", typeof(Guid));
+            group2.Columns.Add("SpecialtyId", typeof(Guid));
+
+            var course2 = dataSet2.Tables.Add("Course");
+            course2.PrimaryKey = new DataColumn[] { course2.Columns.Add("Id", typeof(Guid)) };
+            course2.Columns.Add("Name", typeof(int));
+
+            var specialty2 = dataSet2.Tables.Add("Specialty");
+            specialty2.PrimaryKey = new DataColumn[] { specialty2.Columns.Add("Id", typeof(Guid)) };
+            specialty2.Columns.Add("Name", typeof(string));
+
+            var subject2 = dataSet2.Tables.Add("Subject");
+            subject2.PrimaryKey = new DataColumn[] { subject2.Columns.Add("Id", typeof(Guid)) };
+            subject2.Columns.Add("Name", typeof(string));
+
+            var score2 = dataSet2.Tables.Add("Score");
+            score2.PrimaryKey = new DataColumn[] { score2.Columns.Add("Id", typeof(Guid)) };
+            score2.Columns.Add("Value", typeof(int));
+            score2.Columns.Add("SubjectId", typeof(Guid));
+            score2.Columns.Add("StudentId", typeof(Guid));
+            score2.Columns.Add("CourseId", typeof(Guid));
+
+            var subjectCourse2 = dataSet2.Tables.Add("SubjectCourse");
+            subjectCourse2.PrimaryKey = new DataColumn[] { subjectCourse2.Columns.Add("SubjectId", typeof(Guid)), subjectCourse2.Columns.Add("CourseId", typeof(Guid)) };
+
+            var subjectSpecialty2 = dataSet2.Tables.Add("SubjectSpecialty");
+            subjectSpecialty2.PrimaryKey = new DataColumn[] { subjectSpecialty2.Columns.Add("SubjectId", typeof(Guid)), subjectSpecialty2.Columns.Add("SpecialtyId", typeof(Guid)) };
+
+            dataSet2.Relations.Add("GroupId-StudentId", dataSet2.Tables["Group"].Columns["Id"], dataSet2.Tables["Student"].Columns["GroupId"]);
+            dataSet2.Relations.Add("CourseId-GroupId", dataSet2.Tables["Course"].Columns["Id"], dataSet2.Tables["Group"].Columns["CourseId"]);
+            dataSet2.Relations.Add("SpecialtyId-GroupSpecialtyId", dataSet2.Tables["Specialty"].Columns["Id"], dataSet2.Tables["Group"].Columns["SpecialtyId"]);
+            dataSet2.Relations.Add("SubjectId-ScoreSubjectId", dataSet2.Tables["Subject"].Columns["Id"], dataSet2.Tables["Score"].Columns["SubjectId"]);
+            dataSet2.Relations.Add("StudentId-ScoreStudentId", dataSet2.Tables["Student"].Columns["Id"], dataSet2.Tables["Score"].Columns["StudentId"]);
+            dataSet2.Relations.Add("CourseId-ScoreCourseId", dataSet2.Tables["Course"].Columns["Id"], dataSet2.Tables["Score"].Columns["CourseId"]);
+            FillMyDataSet(dataSet2, 2);
+
+            Repository.Add("second course", new DataSetPrototype(dataSet2, "If you want to take a data set with information for second course, write 'second course'"));
         }
-        private void FillMyDataSet(DataSet dataSet)
+        private void FillMyDataSet(DataSet dataSet, int course)
         {
             SqlConnectionStringBuilder sqlConnectionStringBuilder = GetSqlConnectionStringBuilder();
             SqlCommander sqlCommander = new SqlCommander();
@@ -126,7 +176,8 @@ namespace DataSetFirst
 
                     sqlDataAdapter.SelectCommand = new SqlCommand("SELECT * " +
                         "FROM [dbo].[Course] " +
-                        "WHERE [Name] = 1", sqlConnection);
+                        "WHERE [Name] = @course", sqlConnection);
+                    sqlDataAdapter.SelectCommand.Parameters.Add(new SqlParameter("@course", course));
                     sqlDataAdapter.Fill(dataSet.Tables["Course"]);
 
 
@@ -134,39 +185,45 @@ namespace DataSetFirst
                         "FROM [dbo].[Specialty] sp " +
                         "JOIN [dbo].[Group] g ON g.SpecialtyId = sp.Id " +
                         "JOIN [dbo].[Course] c ON c.Id = g.CourseId " +
-                        "WHERE c.[Name] = 1", sqlConnection);
+                        "WHERE c.[Name] = @course", sqlConnection);
+                    sqlDataAdapter.SelectCommand.Parameters.Add(new SqlParameter("@course", course));
                     sqlDataAdapter.Fill(dataSet.Tables["Specialty"]);
 
                     sqlDataAdapter.SelectCommand = new SqlCommand("SELECT g.[Id], g.[Name], g.[AverageScore], g.[CourseId], g.[SpecialtyId] " +
                         "FROM [dbo].[Group] g " +
                         "JOIN [dbo].[Course] c ON c.Id = g.CourseId " +
-                        "WHERE c.[Name] = 1", sqlConnection);
+                        "WHERE c.[Name] = @course", sqlConnection);
+                    sqlDataAdapter.SelectCommand.Parameters.Add(new SqlParameter("@course", course));
                     sqlDataAdapter.Fill(dataSet.Tables["Group"]);
 
                     sqlDataAdapter.SelectCommand = new SqlCommand("SELECT sub.Id, sub.[Name] " +
                         "FROM [dbo].[Subject] sub " +
                         "JOIN [dbo].[SubjectCourse] subCo ON subCo.SubjectId = sub.Id " +
                         "JOIN [dbo].[Course] c ON c.Id = subCo.CourseId " +
-                        "WHERE c.[Name] = 1", sqlConnection);
+                        "WHERE c.[Name] = @course", sqlConnection);
+                    sqlDataAdapter.SelectCommand.Parameters.Add(new SqlParameter("@course", course));
                     sqlDataAdapter.Fill(dataSet.Tables["Subject"]);
 
                     sqlDataAdapter.SelectCommand = new SqlCommand("SELECT st.Id, st.FirstName, st.LastName, st.GroupId, st.AverageScore " +
                         "FROM [dbo].[Student] st " +
                         "JOIN [dbo].[Group] g ON g.Id = st.GroupId " +
                         "JOIN [dbo].[Course] c ON c.Id = g.CourseId " +
-                        "WHERE c.[Name] = 1", sqlConnection);
+                        "WHERE c.[Name] = @course", sqlConnection);
+                    sqlDataAdapter.SelectCommand.Parameters.Add(new SqlParameter("@course", course));
                     sqlDataAdapter.Fill(dataSet.Tables["Student"]);
 
                     sqlDataAdapter.SelectCommand = new SqlCommand("SELECT sc.Id, sc.[Value], sc.[SubjectId], sc.[StudentId], sc.[CourseId] " +
                         "FROM [dbo].[Score] sc " +
                         "JOIN [dbo].[Course] c ON c.Id = sc.CourseId " +
-                        "WHERE c.[Name] = 1", sqlConnection);
+                        "WHERE c.[Name] = @course", sqlConnection);
+                    sqlDataAdapter.SelectCommand.Parameters.Add(new SqlParameter("@course", course));
                     sqlDataAdapter.Fill(dataSet.Tables["Score"]);
 
                     sqlDataAdapter.SelectCommand = new SqlCommand("SELECT sc.SubjectId, sc.CourseId " +
                         "FROM [dbo].[SubjectCourse] sc " +
                         "JOIN [dbo].[Course] c ON c.Id = sc.CourseId " +
-                        "WHERE c.[Name] = 1", sqlConnection);
+                        "WHERE c.[Name] = @course", sqlConnection);
+                    sqlDataAdapter.SelectCommand.Parameters.Add(new SqlParameter("@course", course));
                     sqlDataAdapter.Fill(dataSet.Tables["SubjectCourse"]);
 
                     sqlDataAdapter.SelectCommand = new SqlCommand("SELECT subSpec.SubjectId, subSpec.SpecialtyId " +
@@ -174,7 +231,8 @@ namespace DataSetFirst
                         "JOIN [dbo].[Specialty] sp ON sp.Id = subSpec.SpecialtyId " +
                         "JOIN [dbo].[Group] g ON g.SpecialtyId = sp.Id " +
                         "JOIN [dbo].[Course] c ON c.Id = g.CourseId " +
-                        "WHERE c.[Name] = 1", sqlConnection);
+                        "WHERE c.[Name] = @course", sqlConnection);
+                    sqlDataAdapter.SelectCommand.Parameters.Add(new SqlParameter("@course", course));
                     sqlDataAdapter.Fill(dataSet.Tables["SubjectSpecialty"]);
 
                     //var resRows = from sub in dataSet.Tables["Subject"].AsEnumerable()
@@ -222,6 +280,14 @@ namespace DataSetFirst
             //            }
             //        }
             //    });
+        }
+        private void AddCourse(SqlDataAdapter sqlDataAdapter, SqlConnection sqlConnection, DataSet dataSet, int course)
+        {
+            sqlDataAdapter.SelectCommand = new SqlCommand("SELECT * " +
+                "FROM [dbo].[Course] " +
+                "WHERE [Name] = sqlParameter", sqlConnection);
+            SqlParameter sqlParameter = new SqlParameter("@course", course);
+            sqlDataAdapter.Fill(dataSet.Tables["Course"]);
         }
         private static SqlConnectionStringBuilder GetSqlConnectionStringBuilder()
         {

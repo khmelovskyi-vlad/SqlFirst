@@ -18,19 +18,21 @@ namespace DataSetFirst
         public void Run()
         {
             DataSet dataSet = new DataSet();
+            DataSetRepository dataSetRepository = new DataSetRepository();
             if (userInteractor.ReadCreationMode() == CreationMode.Predefined)
             {
-                dataSet = userInteractor.SelectDataSet();
-                if (userInteractor.CheckNeedAddToDataBase("If you want to add some students to the data set, click 'Enter'"))
+                var dataSets = userInteractor.SelectDataSets(dataSetRepository);
+                dataSet = CreateDataSet(dataSets);
+                if (userInteractor.CheckNeedAddData("If you want to add some students to the data set, click 'Enter'"))
                 {
                     var students = AddSomeRandomStudents(dataSet);
-                    if (userInteractor.CheckNeedAddToDataBase("If you want to add to the database added students, click 'Enter'"))
+                    if (userInteractor.CheckNeedAddData("If you want to add to the database added students, click 'Enter'"))
                     {
                         AddStudentsToDataBase(dataSet);
-                        if (userInteractor.CheckNeedAddToDataBase("If you want to add some score to added students to the data set, click 'Enter'"))
+                        if (userInteractor.CheckNeedAddData("If you want to add some score to added students to the data set, click 'Enter'"))
                         {
                             AddSomeRandomStudentsScores(dataSet, students);
-                            if (userInteractor.CheckNeedAddToDataBase("If you want to add some score to added students to the data set, click 'Enter'"))
+                            if (userInteractor.CheckNeedAddData("If you want to add some score to added students to the data set, click 'Enter'"))
                             {
                                 AddStudentsScoresToDataBase(dataSet);
                             }
@@ -60,7 +62,14 @@ namespace DataSetFirst
                 dataSet.Tables.AddRange(tables);
             }
         }
-
+        private DataSet CreateDataSet(DataSet[] dataSets)
+        {
+            for (int i = 1; i < dataSets.Length; i++)
+            {
+                dataSets[0].Merge(dataSets[i]);
+            }
+            return dataSets[0];
+        }
         private void AddStudentsScoresToDataBase(DataSet dataSet)
         {
             SqlConnectionStringBuilder sqlConnectionStringBuilder = GetSqlConnectionStringBuilder();

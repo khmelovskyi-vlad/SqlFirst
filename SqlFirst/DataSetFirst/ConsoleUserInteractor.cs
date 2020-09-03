@@ -79,11 +79,11 @@ namespace DataSetFirst
         private bool CheckNeedContinuetion(string message, ConsoleKey consoleKey)
         {
             Console.WriteLine(message);
-            if (Console.ReadKey(true).Key != consoleKey)
+            if (Console.ReadKey(true).Key == consoleKey)
             {
-                return false;
+                return true;
             }
-            return true;
+            return false;
         }
         private string ReadSomeName(string message)
         {
@@ -154,35 +154,44 @@ namespace DataSetFirst
             }
         }
 
-        public DataSet SelectDataSet()
+        public DataSet[] SelectDataSets(DataSetRepository dataSetRepository)
         {
-            DataSetRepository dataSetRepository = new DataSetRepository();
-            WriteSuggestions(dataSetRepository.Repository);
-            return ReadDataSet(dataSetRepository.Repository);
+            Dictionary<string, DataSetPrototype> needDataSets = new Dictionary<string, DataSetPrototype>();
+            while (true)
+            {
+                WriteSuggestions(dataSetRepository.Repository, needDataSets);
+                ReadDataSet(dataSetRepository.Repository, needDataSets);
+                if(!CheckNeedContinuetion("If you want to add more data sets, click Enter", ConsoleKey.Enter))
+                {
+                    return needDataSets.Select(data => data.Value.DataSet).ToArray();
+                }
+            }
         }
-        private DataSet ReadDataSet(Dictionary<string, DataSetPrototype> repository)
+        private void ReadDataSet(Dictionary<string, DataSetPrototype> repository, Dictionary<string, DataSetPrototype> haveRepository)
         {
             while (true)
             {
                 var line = Console.ReadLine();
                 foreach (var item in repository)
                 {
-                    if (item.Key == line)
+                    if (item.Key == line && !haveRepository.Select(data => data.Key).Contains(line))
                     {
-                        return item.Value.DataSet;
+                        haveRepository.Add(item.Key, item.Value);
+                        return;
+                        //return item.Value.DataSet;
                     }
                 }
                 Console.WriteLine("Don't have this data set, write else");
             }
         }
-        private void WriteSuggestions(Dictionary<string, DataSetPrototype> repository)
+        private void WriteSuggestions(Dictionary<string, DataSetPrototype> repository, Dictionary<string, DataSetPrototype> haveRepository)
         {
-            foreach (var item in repository)
+            foreach (var item in repository.Except(haveRepository))
             {
                 Console.WriteLine(item.Value.Suggestion);
             }
         }
-        public bool CheckNeedAddToDataBase(string message)
+        public bool CheckNeedAddData(string message)
         {
             Console.WriteLine(message);
             if (Console.ReadKey(true).Key == ConsoleKey.Enter)

@@ -11,7 +11,7 @@ namespace DataSetFirst
     {
         DataTable[] CreateDataSetTables();
         CreationMode ReadCreationMode();
-        DataSet SelectDataSet();
-        bool CheckNeedAddToDataBase(string message);
+        DataSet[] SelectDataSets(DataSetRepository dataSetRepository);
+        bool CheckNeedAddData(string message);
     }
 }
