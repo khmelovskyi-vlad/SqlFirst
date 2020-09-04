@@ -127,22 +127,40 @@ namespace DataSetFirst
                     sqlConnection.Open();
                     SqlDataAdapter sqlDataAdapter = new SqlDataAdapter();
 
-                    //SqlCommandBuilder commandBuilder = new SqlCommandBuilder(sqlDataAdapter);
                     //sqlDataAdapter.SelectCommand = new SqlCommand("SELECT * " +
                     //    "FROM [dbo].[Course] ", sqlConnection);
                     //sqlDataAdapter.Fill(dataSet.Tables["Course"]);
 
-                    ////sqlDataAdapter.SelectCommand = new SqlCommand("SELECT sp.Id, sp.[Name] " +
-                    ////    "FROM [dbo].[Specialty] sp " +
-                    ////    "JOIN [dbo].[Group] g ON g.SpecialtyId = sp.Id " +
-                    ////    "JOIN [dbo].[Course] c ON c.Id = g.CourseId " +
-                    ////    "WHERE c.[Name] = 1", sqlConnection);
-                    ////sqlDataAdapter.Fill(dataSet.Tables["Specialty"]);
 
-                    //dataSet.Tables["Course"].Rows.Add(Guid.NewGuid(), 10);
-                    ////dataSet.Tables["Specialty"].Rows.Add(Guid.NewGuid(), "100000");
+                    /*using (SqlTransaction transaction = sqlConnection.BeginTransaction())
+                    {
 
-                    //var s = sqlDataAdapter.Update(dataSet.Tables["Course"]);
+                        sqlDataAdapter.SelectCommand = new SqlCommand("SELECT TOP 1 * " +
+                            "FROM [dbo].[Course] c " +
+                            "WHERE c.[Name] = 1", sqlConnection);
+                        sqlDataAdapter.SelectCommand.Transaction = transaction;
+                        SqlCommandBuilder commandBuilder = new SqlCommandBuilder(sqlDataAdapter);
+                        sqlDataAdapter.InsertCommand = commandBuilder.GetInsertCommand();
+
+                        sqlDataAdapter.Fill(dataSet.Tables["Course"]);
+
+                        dataSet.Tables["Course"].Rows.Add(Guid.NewGuid(), 10);
+                        sqlDataAdapter.InsertCommand.Transaction = transaction;
+
+                        var s = sqlDataAdapter.Update(dataSet.Tables["Course"]);
+                        commandBuilder = new SqlCommandBuilder(sqlDataAdapter);
+
+                        sqlDataAdapter.SelectCommand = new SqlCommand("SELECT TOP 1 * " +
+                            "FROM [dbo].[Specialty] sp ", sqlConnection);
+                        sqlDataAdapter.SelectCommand.Transaction = transaction;
+                        sqlDataAdapter.InsertCommand = commandBuilder.GetInsertCommand();
+                        sqlDataAdapter.Fill(dataSet.Tables["Specialty"]);
+
+                        dataSet.Tables["Specialty"].Rows.Add(Guid.NewGuid(), "100000");
+
+                        var ss = sqlDataAdapter.Update(dataSet.Tables["Specialty"]);
+                        transaction.Commit();
+                    }*/
 
                     //sqlDataAdapter.InsertCommand = new SqlCommand("INSERT INTO [dbo].[Course] " +
                     //    "(Id, Name) " +
@@ -174,7 +192,7 @@ namespace DataSetFirst
                     //}
 
 
-                    sqlDataAdapter.SelectCommand = new SqlCommand("SELECT * " +
+                        sqlDataAdapter.SelectCommand = new SqlCommand("SELECT * " +
                         "FROM [dbo].[Course] " +
                         "WHERE [Name] = @course", sqlConnection);
                     sqlDataAdapter.SelectCommand.Parameters.Add(new SqlParameter("@course", course));

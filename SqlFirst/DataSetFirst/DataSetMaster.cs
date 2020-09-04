@@ -26,25 +26,18 @@ namespace DataSetFirst
                 if (userInteractor.CheckNeedAddData("If you want to add some students to the data set, click 'Enter'"))
                 {
                     var students = AddSomeRandomStudents(dataSet);
-                    if (userInteractor.CheckNeedAddData("If you want to add to the database added students, click 'Enter'"))
+                    if (userInteractor.CheckNeedAddData("If you want to add some score to added students to the data set, click 'Enter'"))
                     {
-                        AddStudentsToDataBase(dataSet);
+                        AddSomeRandomStudentsScores(dataSet, students);
                         if (userInteractor.CheckNeedAddData("If you want to add some score to added students to the data set, click 'Enter'"))
                         {
-                            AddSomeRandomStudentsScores(dataSet, students);
-                            if (userInteractor.CheckNeedAddData("If you want to add some score to added students to the data set, click 'Enter'"))
-                            {
-                                AddStudentsScoresToDataBase(dataSet);
-                            }
-                            else
-                            {
-                                dataSet.Tables["Score"].AcceptChanges();
-                            }
+                            AddStudentsScoresToDataBase(dataSet);
                         }
-                    }
-                    else
-                    {
-                        dataSet.Tables["Student"].AcceptChanges();
+                        else
+                        {
+                            dataSet.Tables["Score"].AcceptChanges();
+                            dataSet.Tables["Student"].AcceptChanges();
+                        }
                     }
                 }
                 //foreach (var row in dataSet.Tables["Student"].Select())
@@ -78,27 +71,29 @@ namespace DataSetFirst
                 (sqlConnection) =>
                 {
                     sqlConnection.Open();
-                    SqlDataAdapter sqlDataAdapter = new SqlDataAdapter("SELECT TOP 1 * " +
-                        "FROM [dbo].[Score]", sqlConnection);
-                    SqlCommandBuilder commandBuilder = new SqlCommandBuilder(sqlDataAdapter);
-                    var sour = dataSet.Tables["Score"].GetChanges();
-                    var count = sqlDataAdapter.Update(dataSet.Tables["Score"]);
-                    Console.WriteLine(count);
-                });
-        }
-        private void AddStudentsToDataBase(DataSet dataSet)
-        {
-            SqlConnectionStringBuilder sqlConnectionStringBuilder = GetSqlConnectionStringBuilder();
-            SqlCommander sqlCommander = new SqlCommander();
-            sqlCommander.Run(sqlConnectionStringBuilder,
-                (sqlConnection) =>
-                {
-                    sqlConnection.Open();
-                    SqlDataAdapter sqlDataAdapter = new SqlDataAdapter("SELECT TOP 1 * " +
-                        "FROM [dbo].[Student]", sqlConnection);
-                    SqlCommandBuilder commandBuilder = new SqlCommandBuilder(sqlDataAdapter);
-                    var count = sqlDataAdapter.Update(dataSet.Tables["Student"]);
-                    Console.WriteLine(count);
+                    using (SqlTransaction transaction = sqlConnection.BeginTransaction())
+                    {
+                        SqlDataAdapter sqlDataAdapter = new SqlDataAdapter("SELECT TOP 1 * " +
+                            "FROM [dbo].[Student]", sqlConnection);
+                        SqlCommandBuilder commandBuilder = new SqlCommandBuilder(sqlDataAdapter);
+                        sqlDataAdapter.SelectCommand.Transaction = transaction;
+                        sqlDataAdapter.InsertCommand = commandBuilder.GetInsertCommand();
+                        sqlDataAdapter.InsertCommand.Transaction = transaction;
+                        var count = sqlDataAdapter.Update(dataSet.Tables["Student"]);
+                        Console.WriteLine(count);
+
+
+                        commandBuilder = new SqlCommandBuilder(sqlDataAdapter);
+                        sqlDataAdapter.SelectCommand = new SqlCommand("SELECT TOP 1 * " +
+                            "FROM [dbo].[Score]", sqlConnection);
+                        sqlDataAdapter.SelectCommand.Transaction = transaction;
+                        sqlDataAdapter.InsertCommand = commandBuilder.GetInsertCommand();
+                        sqlDataAdapter.InsertCommand.Transaction = transaction;
+                        var sour = dataSet.Tables["Score"].GetChanges();
+                        count = sqlDataAdapter.Update(dataSet.Tables["Score"]);
+                        Console.WriteLine(count);
+                        transaction.Commit();
+                    }
                 });
         }
 

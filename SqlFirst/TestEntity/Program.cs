@@ -13,32 +13,33 @@ namespace TestEntity
         {
             using (var db = new BloggingContext())
             {
-                var blogs = db.Blogs
-                    .Where(b => b.Rating > 3)
-                    .OrderBy(b => b.Url)
-                    .ToList();
+                db.Database.EnsureDeleted();
+                //var blogs = db.Blogs
+                //    .Where(b => b.Rating > 3)
+                //    .OrderBy(b => b.Url)
+                //    .ToList();
             }
-            using (var db = new BloggingContext())
-            {
-                var strategy = db.Database.CreateExecutionStrategy();
+            //using (var db = new BloggingContext())
+            //{
+            //    var strategy = db.Database.CreateExecutionStrategy();
 
-                strategy.Execute(() =>
-                {
-                    using (var context = new BloggingContext())
-                    {
-                        using (var transaction = context.Database.BeginTransaction())
-                        {
-                            context.Blogs.Add(new Blog { Url = "http://blogs.msdn.com/dotnet" });
-                            context.SaveChanges();
+            //    strategy.Execute(() =>
+            //    {
+            //        using (var context = new BloggingContext())
+            //        {
+            //            using (var transaction = context.Database.BeginTransaction())
+            //            {
+            //                context.Blogs.Add(new Student { Url = "http://blogs.msdn.com/dotnet" });
+            //                context.SaveChanges();
 
-                            context.Blogs.Add(new Blog { Url = "http://blogs.msdn.com/visualstudio" });
-                            context.SaveChanges();
+            //                context.Blogs.Add(new Student { Url = "http://blogs.msdn.com/visualstudio" });
+            //                context.SaveChanges();
 
-                            transaction.Commit();
-                        }
-                    }
-                });
-            }
+            //                transaction.Commit();
+            //            }
+            //        }
+            //    });
+            //}
             Console.ReadKey();
         }
     }

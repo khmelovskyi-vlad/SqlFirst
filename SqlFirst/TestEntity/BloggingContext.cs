@@ -10,18 +10,94 @@ namespace TestEntity
 {
     class BloggingContext : DbContext
     {
-        public DbSet<Blog> Blogs { get; set; }
-        public DbSet<Post> Posts { get; set; }
+        public DbSet<Student> Students { get; set; }
+        public DbSet<Group> Groups { get; set; }
+        public DbSet<Specialty> Specialties { get; set; }
+        public DbSet<Score> Scores { get; set; }
+        public DbSet<Course> Courses { get; set; }
+        public DbSet<Subject> Subjects { get; set; }
+        public DbSet<SubjectCourse> SubjectCourses { get; set; }
+        public DbSet<SubjectSpecialty> SubjectSpecialties { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlServer(
-                @"Server=(localdb)\MSSQLLocalDB;Database=Blogging;Integrated Security=True");
+                @"Server=WIN-DHV0BQSLTCR;Database=University;Integrated Security=True");
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Blog>()
-                .Property(b => b.Url)
-                .IsRequired();
+            #region Keys
+
+            modelBuilder.Entity<SubjectSpecialty>()
+                .HasKey(ss => new { ss.SubjectId, ss.SpecialtyId });
+            modelBuilder.Entity<SubjectCourse>()
+                .HasKey(sc => new { sc.SubjectId, sc.CourseId });
+
+            modelBuilder.Entity<Student>()
+                .HasOne(s => s.Group)
+                .WithMany(g => g.Students)
+                .HasForeignKey(s => s.GroupId);
+
+            modelBuilder.Entity<Group>()
+                .HasOne(g => g.Course)
+                .WithMany(c => c.Groups)
+                .HasForeignKey(g => g.CourseId);
+
+            modelBuilder.Entity<Group>()
+                .HasOne(g => g.Specialty)
+                .WithMany(s => s.Groups)
+                .HasForeignKey(g => g.SpecialtyId);
+
+            modelBuilder.Entity<Score>()
+                .HasOne(s => s.Subject)
+                .WithMany(s => s.Scores)
+                .HasForeignKey(s => s.SubjectId);
+
+            modelBuilder.Entity<Score>()
+                .HasOne(s => s.Student)
+                .WithMany(s => s.Scores)
+                .HasForeignKey(s => s.StudentId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Score>()
+                .HasOne(s => s.Course)
+                .WithMany(c => c.Scores)
+                .HasForeignKey(s => s.CourseId);
+
+            modelBuilder.Entity<SubjectCourse>()
+                .HasOne(sc => sc.Subject)
+                .WithMany(s => s.SubjectCourses)
+                .HasForeignKey(sc => sc.SubjectId);
+
+            modelBuilder.Entity<SubjectCourse>()
+                .HasOne(sc => sc.Course)
+                .WithMany(c => c.SubjectCourses)
+                .HasForeignKey(sc => sc.CourseId);
+
+
+            modelBuilder.Entity<SubjectSpecialty>()
+                .HasOne(ss => ss.Subject)
+                .WithMany(s => s.SubjectSpecialties)
+                .HasForeignKey(ss => ss.SubjectId);
+
+            modelBuilder.Entity<SubjectSpecialty>()
+                .HasOne(ss => ss.Specialty)
+                .WithMany(s => s.SubjectSpecialties)
+                .HasForeignKey(ss => ss.SpecialtyId);
+            #endregion
+
+            #region Indexes
+            modelBuilder.Entity<Score>()
+                .HasIndex(s => s.Value);
+                //.IncludeProperties(s => new
+                //{
+                //    s.StudentId,
+                //    s.SubjectId
+                //});
+            #endregion
+            //modelBuilder.Entity<Group>()
+            //    .Property(g => g.Name)
+            //    .HasComputedColumnSql("");
         }
     }
 }

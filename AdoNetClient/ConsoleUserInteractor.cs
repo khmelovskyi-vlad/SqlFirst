@@ -169,21 +169,6 @@ namespace AdoNetClient
                 await WriteDataWithSmallWindow(sqlDataReader, cancellationTokenSource);
             }
         }
-        private async Task WriteDataWithSmallWindow(SqlDataReader sqlDataReader, CancellationToken cancellationTokenSource)
-        {
-            while (await sqlDataReader.ReadAsync())
-            {
-                for (int i = 0; i < sqlDataReader.VisibleFieldCount; i++)
-                {
-                    Console.Write($"{await sqlDataReader.GetFieldValueAsync<object>(i, cancellationTokenSource),-20}");
-                    if (i < sqlDataReader.VisibleFieldCount - 1)
-                    {
-                        Console.Write(" | ");
-                    }
-                }
-                Console.WriteLine();
-            }
-        }
         private void WriteColumns(ReadOnlyCollection<DbColumn> columns, WriteTypeData typeWriteData)
         {
             if (typeWriteData == WriteTypeData.withBigWindow)
@@ -206,9 +191,39 @@ namespace AdoNetClient
                 return WriteTypeData.withBigWindow;
             }
         }
+        private async Task WriteDataWithSmallWindow(SqlDataReader sqlDataReader, CancellationToken cancellationTokenSource)
+        {
+            var readTask = sqlDataReader.ReadAsync(cancellationTokenSource);
+            if (readTask.IsCanceled)
+            {
+                return;
+            }
+            while (await readTask)
+            {
+                for (int i = 0; i < sqlDataReader.VisibleFieldCount; i++)
+                {
+                    var task = sqlDataReader.GetFieldValueAsync<object>(i, cancellationTokenSource);
+                    if (task.IsCanceled)
+                    {
+                        return;
+                    }
+                    Console.Write($"{await task,-20}");
+                    if (i < sqlDataReader.VisibleFieldCount - 1)
+                    {
+                        Console.Write(" | ");
+                    }
+                }
+                Console.WriteLine();
+            }
+        }
         private async Task WriteDataWithBigWindow(SqlDataReader sqlDataReader, CancellationToken cancellationTokenSource)
         {
-            while (await sqlDataReader.ReadAsync())
+            var readTask = sqlDataReader.ReadAsync(cancellationTokenSource);
+            if (readTask.IsCanceled)
+            {
+                return;
+            }
+            while (await readTask)
             {
                 var dataNames = new string[sqlDataReader.VisibleFieldCount];
                 for (int i = 0; i < dataNames.Length; i++)
