@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TestEntity
 {
-    class SubjectSpecialty
+    public class SubjectSpecialty
     {
         public Guid SubjectId { get; set; }
         public Subject Subject { get; set; }

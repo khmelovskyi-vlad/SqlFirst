@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace TestEntity
 {
-    class Group
+    public class Group
     {
         [Key]
         public Guid Id { get; set; }

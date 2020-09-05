@@ -193,21 +193,11 @@ namespace AdoNetClient
         }
         private async Task WriteDataWithSmallWindow(SqlDataReader sqlDataReader, CancellationToken cancellationTokenSource)
         {
-            var readTask = sqlDataReader.ReadAsync(cancellationTokenSource);
-            if (readTask.IsCanceled)
-            {
-                return;
-            }
-            while (await readTask)
+            while (await sqlDataReader.ReadAsync(cancellationTokenSource))
             {
                 for (int i = 0; i < sqlDataReader.VisibleFieldCount; i++)
                 {
-                    var task = sqlDataReader.GetFieldValueAsync<object>(i, cancellationTokenSource);
-                    if (task.IsCanceled)
-                    {
-                        return;
-                    }
-                    Console.Write($"{await task,-20}");
+                    Console.Write($"{await sqlDataReader.GetFieldValueAsync<object>(i, cancellationTokenSource),-20}");
                     if (i < sqlDataReader.VisibleFieldCount - 1)
                     {
                         Console.Write(" | ");
@@ -216,24 +206,15 @@ namespace AdoNetClient
                 Console.WriteLine();
             }
         }
-        private async Task WriteDataWithBigWindow(SqlDataReader sqlDataReader, CancellationToken cancellationTokenSource)
+        private async Task WriteDataWithBigWindow(SqlDataReader sqlDataReader, CancellationToken cancellationToken)
         {
-            var readTask = sqlDataReader.ReadAsync(cancellationTokenSource);
-            if (readTask.IsCanceled)
-            {
-                return;
-            }
-            while (await readTask)
+            
+            while (await sqlDataReader.ReadAsync(cancellationToken))
             {
                 var dataNames = new string[sqlDataReader.VisibleFieldCount];
                 for (int i = 0; i < dataNames.Length; i++)
                 {
-                    var task = sqlDataReader.GetFieldValueAsync<object>(i, cancellationTokenSource);
-                    if (task.IsCanceled)
-                    {
-                        return;
-                    }
-                    dataNames[i] = (await task).ToString();
+                    dataNames[i] = (await sqlDataReader.GetFieldValueAsync<object>(i, cancellationToken)).ToString();
                 }
                 WriteColumns(dataNames);
                 Console.WriteLine();
@@ -624,17 +605,17 @@ namespace AdoNetClient
                 }
             }
         }
-        public void SelectContinuation(CancellationTokenSource cancellationTokenSource, AutoResetEvent autoResetCommand)
+        public async Task SelectContinuation(CancellationTokenSource cancellationTokenSource, Task task)
         {
             Console.WriteLine("If you want to stop the operation, click 'b'");
             if (Console.ReadKey(true).Key == ConsoleKey.B)
             {
                 cancellationTokenSource.Cancel(false);
-                autoResetCommand.WaitOne();
+                await task;
             }
             else
             {
-                autoResetCommand.WaitOne();
+                await task;
             }
         }
     }

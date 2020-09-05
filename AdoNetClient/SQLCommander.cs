@@ -15,8 +15,7 @@ namespace AdoNetClient
             this.userInteractor = userInteractor;
         }
         IUserInteractor userInteractor;
-
-        public AutoResetEvent autoResetCommand = new AutoResetEvent(false);
+        
         public async Task RunCommandSession(SqlConnection connection, SelectionMode mode)
         {
             var cancellationTokenSource = new CancellationTokenSource();
@@ -33,7 +32,8 @@ namespace AdoNetClient
                 task = RunCommand(queryInformation.Query, connection, queryInformation.CommandExecutionWay, queryInformation.CommandType, queryInformation.SqlParameters,
                     cancellationTokenSource.Token);
             }
-            userInteractor.SelectContinuation(cancellationTokenSource, autoResetCommand);
+            TaskCompletionSource<object> taskCompletionSource = new TaskCompletionSource<object>();
+            await userInteractor.SelectContinuation(cancellationTokenSource, task);
         }
         private QueryInformation FindQueryInformation()
         {
@@ -49,7 +49,6 @@ namespace AdoNetClient
                 sqlCommand.CommandTimeout = int.MaxValue;
                 await ExecuteCommand(sqlCommand, commandExecutionWay, commandType, sqlParameters, cancellationToken);
             }
-            autoResetCommand.Set();
         }
         private async Task ExecuteCommand(SqlCommand sqlCommand, CommandExecutionWay commandExecutionWay, CommandType commandType, 
             SqlParameter[] sqlParameters, CancellationToken cancellationToken)

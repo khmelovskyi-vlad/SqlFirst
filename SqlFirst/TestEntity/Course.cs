@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TestEntity
 {
-    class Course
+    public class Course
     {
         [Key]
         public Guid Id { get; set; }

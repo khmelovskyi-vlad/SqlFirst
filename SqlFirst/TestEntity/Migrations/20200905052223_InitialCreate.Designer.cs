@@ -9,8 +9,8 @@ using TestEntity;
 
 namespace TestEntity.Migrations
 {
-    [DbContext(typeof(BloggingContext))]
-    [Migration("20200904144440_InitialCreate")]
+    [DbContext(typeof(UniversityContext))]
+    [Migration("20200905052223_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

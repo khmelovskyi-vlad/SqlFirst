@@ -93,12 +93,10 @@ namespace AdoNetClient
                 CommandType.StoredProcedure,
                 () => "[dbo].[PickRandomStringg]",
                 () => {
-                    var @randomString = new SqlParameter("@randomString", userInteractor.ReadParameter("Write the random string"));
                     var @minLength = new SqlParameter("@minLength", Convert.ToInt32(userInteractor.ReadParameter("Write the minimum length")));
                     var @maxLength = new SqlParameter("@maxLength", Convert.ToInt32(userInteractor.ReadParameter("Write the maximum length")));
                     var @chars = new SqlParameter("@chars", userInteractor.ReadParameter("Write the characters that will make up the length"));
-                    @randomString.Size = Convert.ToInt32(@maxLength.Value);
-                    @randomString.Direction = ParameterDirection.InputOutput;
+                    var @randomString = new SqlParameter() { ParameterName = "@randomString", Size = Convert.ToInt32(@maxLength.Value), Direction = ParameterDirection.Output};
                     return new SqlParameter[] { @minLength, @maxLength, @chars, @randomString};
                 }));
         }

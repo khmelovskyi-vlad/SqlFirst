@@ -24,6 +24,6 @@ namespace AdoNetClient
         string ReadParameter(string message);
         void WriteExceptionMessage(Exception ex);
         void WriteParametersResult(SqlParameterCollection sqlParameterCollection);
-        void SelectContinuation(CancellationTokenSource cancellationTokenSource, AutoResetEvent autoResetCommand);
+        Task SelectContinuation(CancellationTokenSource cancellationTokenSource, Task task);
     }
 }

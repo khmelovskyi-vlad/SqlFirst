@@ -77,8 +77,10 @@ namespace DataSetFirst
                             "FROM [dbo].[Student]", sqlConnection);
                         SqlCommandBuilder commandBuilder = new SqlCommandBuilder(sqlDataAdapter);
                         sqlDataAdapter.SelectCommand.Transaction = transaction;
+
                         sqlDataAdapter.InsertCommand = commandBuilder.GetInsertCommand();
                         sqlDataAdapter.InsertCommand.Transaction = transaction;
+
                         var count = sqlDataAdapter.Update(dataSet.Tables["Student"]);
                         Console.WriteLine(count);
 
@@ -87,11 +89,14 @@ namespace DataSetFirst
                         sqlDataAdapter.SelectCommand = new SqlCommand("SELECT TOP 1 * " +
                             "FROM [dbo].[Score]", sqlConnection);
                         sqlDataAdapter.SelectCommand.Transaction = transaction;
+
                         sqlDataAdapter.InsertCommand = commandBuilder.GetInsertCommand();
                         sqlDataAdapter.InsertCommand.Transaction = transaction;
+
                         var sour = dataSet.Tables["Score"].GetChanges();
                         count = sqlDataAdapter.Update(dataSet.Tables["Score"]);
                         Console.WriteLine(count);
+
                         transaction.Commit();
                     }
                 });

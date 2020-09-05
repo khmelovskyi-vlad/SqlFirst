@@ -252,7 +252,7 @@ namespace DataSetFirst
                         "WHERE c.[Name] = @course", sqlConnection);
                     sqlDataAdapter.SelectCommand.Parameters.Add(new SqlParameter("@course", course));
                     sqlDataAdapter.Fill(dataSet.Tables["SubjectSpecialty"]);
-
+                    dataSet.AcceptChanges();
                     //var resRows = from sub in dataSet.Tables["Subject"].AsEnumerable()
                     //          join subCo in dataSet.Tables["SubjectCourse"].AsEnumerable() on Guid.Parse(sub["Id"].ToString()) equals Guid.Parse(subCo["SubjectId"].ToString())
                     //          join subSpec in dataSet.Tables["SubjectSpecialty"].AsEnumerable() on Guid.Parse(sub["Id"].ToString()) equals Guid.Parse(subSpec["SubjectId"].ToString())

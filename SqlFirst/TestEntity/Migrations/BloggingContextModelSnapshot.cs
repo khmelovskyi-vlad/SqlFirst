@@ -8,7 +8,7 @@ using TestEntity;
 
 namespace TestEntity.Migrations
 {
-    [DbContext(typeof(BloggingContext))]
+    [DbContext(typeof(UniversityContext))]
     partial class BloggingContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
