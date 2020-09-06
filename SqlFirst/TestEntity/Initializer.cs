@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,17 +10,12 @@ namespace TestEntity
 {
     class Initializer
     {
-        public Initializer()
+        public Initializer(IUserInteractor userInteractor)
         {
+            this.userInteractor = userInteractor;
+        }
+        private IUserInteractor userInteractor;
 
-        }
-        public async Task AddRandomStudent()
-        {
-            //using (var context = new UniversityContext())
-            //{
-            //    await context.Students
-            //}
-        }
         private async Task<Course[]> AddCourses(UniversityContext context)
         {
             Course[] courses = new Course[]
@@ -32,7 +29,7 @@ namespace TestEntity
             };
             return courses;
         }
-        private async Task<Specialty[]> AddSpecialties(UniversityContext context, Random random)
+        private async Task<Specialty[]> AddRandomSpecialties(UniversityContext context, Random random)
         {
             Specialty[] specialties = new Specialty[80];
             for (int i = 0; i < specialties.Length; i++)
@@ -40,12 +37,12 @@ namespace TestEntity
                 specialties[i] = (await context.Specialties.AddAsync(new Specialty()
                 {
                     Id = Guid.NewGuid(),
-                    Name = CreateRandomString(0, 50, "abcdefghijklmnopqrstuvwxyz", random)
+                    Name = CreateRandomString(1, 50, "abcdefghijklmnopqrstuvwxyz", random)
                 })).Entity;
             }
             return specialties;
         }
-        private async Task<Subject[]> AddSubjects(UniversityContext context, Random random)
+        private async Task<Subject[]> AddRandomSubjects(UniversityContext context, Random random)
         {
             Subject[] subjects = new Subject[1000];
             for (int i = 0; i < subjects.Length; i++)
@@ -53,19 +50,19 @@ namespace TestEntity
                 subjects[i] = (await context.Subjects.AddAsync(new Subject()
                 {
                     Id = Guid.NewGuid(),
-                    Name = CreateRandomString(0, 50, "abcdefghijklmnopqrstuvwxyz", random)
+                    Name = CreateRandomString(1, 50, "abcdefghijklmnopqrstuvwxyz", random)
                 })).Entity;
             }
             return subjects;
         }
-        private async Task<SubjectCourse[]> AddSubjectCourses(UniversityContext context, Subject[] subjects, Course[] courses, Random random)
+        private async Task<SubjectCourse[]> AddRandomSubjectCourses(UniversityContext context, Subject[] subjects, Course[] courses, Random random)
         {
             List<SubjectCourse> subjectCourses = new List<SubjectCourse>();
             for (int i = 0; i < subjects.Length; i++)
             {
                 for (int j = 0; j < courses.Length; j++)
                 {
-                    if (CreateRandomBool(random, 50))
+                    if (CreateRandomBool(random, 30))
                     {
                         subjectCourses.Add((await context.SubjectCourses.AddAsync(new SubjectCourse()
                         {
@@ -79,14 +76,14 @@ namespace TestEntity
             }
             return subjectCourses.ToArray();
         }
-        private async Task<SubjectSpecialty[]> AddSubjectSpecialties(UniversityContext context, Subject[] subjects, Specialty[] specialties, Random random)
+        private async Task<SubjectSpecialty[]> AddRandomSubjectSpecialties(UniversityContext context, Subject[] subjects, Specialty[] specialties, Random random)
         {
             List<SubjectSpecialty> subjectSpecialties = new List<SubjectSpecialty>();
             for (int i = 0; i < subjects.Length; i++)
             {
                 for (int j = 0; j < specialties.Length; j++)
                 {
-                    if (CreateRandomBool(random, 10))
+                    if (CreateRandomBool(random, 5))
                     {
                         subjectSpecialties.Add((await context.SubjectSpecialties.AddAsync(new SubjectSpecialty()
                         {
@@ -121,67 +118,140 @@ namespace TestEntity
             return groups.ToArray();
         }
 
-        private async Task<Student[]> AddStudents(UniversityContext context, Group[] groups, Random random)
+        private async Task<Student[]> AddRandomStudents(UniversityContext context, Group[] groups, Random random)
         {
-            Student[] students = new Student[100000];
+            Student[] students = new Student[1];
             for (int i = 0; i < students.Length; i++)
             {
                 var indexGroup = random.Next(0, groups.Length);
                 students[i] = ((await context.Students.AddAsync(new Student()
                 {
                     Id = Guid.NewGuid(),
-                    FirstName = CreateRandomString(0, 50, "abcdefghijklmnopqrstuvwxyz", random),
-                    LastName = CreateRandomString(0, 50, "abcdefghijklmnopqrstuvwxyz", random),
+                    FirstName = CreateRandomString(1, 50, "abcdefghijklmnopqrstuvwxyz", random),
+                    LastName = CreateRandomString(1, 50, "abcdefghijklmnopqrstuvwxyz", random),
                     Group = groups[indexGroup],
                     GroupId = groups[indexGroup].Id
                 })).Entity);
             }
             return students.ToArray();
         }
-        private async Task<Score[]> AddScores(UniversityContext context, Student[] students, Subject[] subjects, Random random)
+        private async Task<Score[]> AddRandomScores(UniversityContext context, Student[] students, Subject[] subjects, Course[] courses, Random random)
         {
             List<Score> scores = new List<Score>();
             for (int i = 0; i < students.Length; i++)
             {
-                var needSubjects = subjects.Where(subjectss => subjectss.SubjectCourses != null 
-                    && subjectss.SubjectSpecialties != null
-                    && subjectss.SubjectCourses.Select(subCo => subCo.Course).Contains(students[i].Group.Course)
-                    && subjectss.SubjectSpecialties.Select(subSpec => subSpec.Specialty).Contains(students[i].Group.Specialty));
-
-                foreach (var subject in needSubjects)
+                for (int j = 1; j <= students[i].Group.Course.Name; j++)
                 {
-                    if (CreateRandomBool(random, 5))
+                    var course = courses.First(c => c.Name == j);
+                    var needSubjects = subjects.Where(subjectss => subjectss.SubjectCourses != null
+                        && subjectss.SubjectSpecialties != null
+                        && subjectss.SubjectCourses.Select(subCo => subCo.CourseId).Contains(course.Id)
+                        && subjectss.SubjectSpecialties.Select(subSpec => subSpec.SpecialtyId).Contains(students[i].Group.Specialty.Id));
+
+                    foreach (var subject in needSubjects)
                     {
-                        scores.Add((await context.Scores.AddAsync(new Score()
+                        if (CreateRandomBool(random, 95))
                         {
-                            Id = Guid.NewGuid(),
-                            Student = students[i],
-                            StudentId = students[i].Id,
-                            Subject = subject,
-                            SubjectId = subject.Id,
-                            Course = students[i].Group.Course,
-                            CourseId = students[i].Group.Course.Id,
-                            Value = random.Next(0, 6)
-                        })).Entity);
+                            scores.Add((await context.Scores.AddAsync(new Score()
+                            {
+                                Id = Guid.NewGuid(),
+                                Student = students[i],
+                                StudentId = students[i].Id,
+                                Subject = subject,
+                                SubjectId = subject.Id,
+                                Course = course,
+                                CourseId = course.Id,
+                                Value = random.Next(0, 6)
+                            })).Entity);
+                        }
                     }
                 }
             }
             return scores.ToArray();
         }
-        public async Task Initialize()
+        public async Task FirstInitializeData()
         {
             Random random = new Random();
             using (var context = new UniversityContext())
             {
                 var courses = await AddCourses(context);
-                var specialties = await AddSpecialties(context, random);
-                var subjects = await AddSubjects(context, random);
-                var subjectSpecialties = await AddSubjectSpecialties(context, subjects, specialties, random);
-                var subjectCourses = await AddSubjectCourses(context, subjects, courses, random);
+                var specialties = await AddRandomSpecialties(context, random);
+                var subjects = await AddRandomSubjects(context, random);
+                var subjectSpecialties = await AddRandomSubjectSpecialties(context, subjects, specialties, random);
+                var subjectCourses = await AddRandomSubjectCourses(context, subjects, courses, random);
                 var groups = await AddGroups(context, courses, specialties);
-                var students = await AddStudents(context, groups, random);
-                var scores = await AddScores(context, students, subjects, random);
+                var students = await AddRandomStudents(context, groups, random);
+                var scores = await AddRandomScores(context, students, subjects, courses, random);
                 await context.SaveChangesAsync();
+            }
+        }
+        public async Task AddStudents()
+        {
+            var students = userInteractor.ReadStudents(await GetAllGroups());
+            using (var university = new UniversityContext())
+            {
+                await university.Students.AddRangeAsync(students);
+                await university.SaveChangesAsync();
+            }
+        }
+        public async Task AddScore()
+        {
+            var scores = userInteractor.ReadScores(await GetAllStudents(), await GetAllSubjects());
+            using (var university = new UniversityContext())
+            {
+                await university.Scores.AddRangeAsync(scores);
+                await university.SaveChangesAsync();
+            }
+        }
+        public async Task ChangeScore()
+        {
+            var scores = userInteractor.ReadScoresToChange(await GetAllScores(), await GetAllStudents());
+            using (var university = new UniversityContext())
+            {
+                university.Scores.UpdateRange(scores);
+                await university.SaveChangesAsync();
+            }
+        }
+        private async Task<List<Score>> GetAllScores()
+        {
+            using (var university = new UniversityContext())
+            {
+                return await university.Scores
+                    .Include(score => score.Course)
+                    .Include(score => score.Subject)
+                    .ToListAsync();
+            }
+        }
+        private async Task<List<Student>> GetAllStudents()
+        {
+            using (var university = new UniversityContext())
+            {
+                return await university.Students
+                    .Include(student => student.Group)
+                    //.ThenInclude(group => group.Specialty)
+                    .Include(student => student.Group)
+                    //.ThenInclude(group => group.Course)
+                    .ToListAsync();
+            }
+        }
+        private async Task<List<Subject>> GetAllSubjects()
+        {
+            using (var university = new UniversityContext())
+            {
+                return await university.Subjects
+                    .Where(subject => subject.SubjectCourses != null && subject.SubjectSpecialties != null)
+                    .Include(subject => subject.SubjectCourses)
+                    //.ThenInclude(subjectCourse => subjectCourse.Course)
+                    .Include(subject => subject.SubjectSpecialties)
+                    //.ThenInclude(subjectSpecialty => subjectSpecialty.Specialty)
+                    .ToListAsync();
+            }
+        }
+        private async Task<List<Group>> GetAllGroups()
+        {
+            using (var university = new UniversityContext())
+            {
+                return await university.Groups.Include(group => group.Course).Include(group => group.Specialty).ToListAsync();
             }
         }
 

@@ -11,8 +11,26 @@ namespace TestEntity
     {
         static async Task<int> Main(string[] args)
         {
-            Initializer initializer = new Initializer();
-            await initializer.Initialize();
+            using (var db = new UniversityContext())
+            {
+                var ss = await db.Database.ExecuteSqlRawAsync("SELECT * " +
+                    "FROM [dbo].[Students]");
+                var s = db.Students.FromSqlRaw("ShowSomeStudents '1'").ToList();
+            }
+            //using (var db = new UniversityContext())
+            //{
+            //    db.Subjects.RemoveRange(db.Subjects);
+            //    await db.SaveChangesAsync();
+            //    db.Courses.RemoveRange(db.Courses);
+            //    await db.SaveChangesAsync();
+            //    db.Specialties.RemoveRange(db.Specialties);
+            //    await db.SaveChangesAsync();
+            //}
+            Initializer initializer = new Initializer(new ConsoleUserInteractor());
+            await initializer.FirstInitializeData();
+            await initializer.ChangeScore();
+            await initializer.AddScore();
+            await initializer.FirstInitializeData();
             using (var db = new UniversityContext())
             {
                 //var students = await db.Students.Where(studentt => studentt.Group.Course.Name == 1).Include(studentt => studentt.Group).ToListAsync();
