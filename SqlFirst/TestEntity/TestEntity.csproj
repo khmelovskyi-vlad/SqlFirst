@@ -166,6 +166,7 @@
     <Compile Include="CommandPrototype.cs" />
     <Compile Include="ConsoleUserInteractor.cs" />
     <Compile Include="Course.cs" />
+    <Compile Include="DataType.cs" />
     <Compile Include="Initializer.cs" />
     <Compile Include="IUserInteractor.cs" />
     <Compile Include="Migrations\20200906163112_InitialCreate.cs" />
@@ -177,9 +178,11 @@
       <DependentUpon>20200906163133_sb-ShowSomeStudents.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\UniversityContextModelSnapshot.cs" />
+    <Compile Include="Mode.cs" />
     <Compile Include="Score.cs" />
     <Compile Include="Specialty.cs" />
     <Compile Include="Student.cs" />
+    <Compile Include="StudentScoresCount.cs" />
     <Compile Include="UniversityContext.cs" />
     <Compile Include="Group.cs" />
     <Compile Include="Program.cs" />

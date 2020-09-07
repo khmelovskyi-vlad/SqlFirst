@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,14 +19,15 @@ namespace TestEntity
         public DbSet<Subject> Subjects { get; set; }
         public DbSet<SubjectCourse> SubjectCourses { get; set; }
         public DbSet<SubjectSpecialty> SubjectSpecialties { get; set; }
-
+        public DbSet<StudentScoresCount> StudentScoresCounts { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(
-                @"Server=WIN-DHV0BQSLTCR;Database=University;Integrated Security=True");
+            optionsBuilder.UseSqlServer(new SqlConnection(GetSqlConnectionStringBuilder().ConnectionString));
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder
+                .Entity<StudentScoresCount>(ssc => ssc.ToView("Viev_StudentScoresCount"));
             #region Keys
 
             modelBuilder.Entity<SubjectSpecialty>()
@@ -89,15 +91,24 @@ namespace TestEntity
             #region Indexes
             modelBuilder.Entity<Score>()
                 .HasIndex(s => s.Value);
-                //.IncludeProperties(s => new
-                //{
-                //    s.StudentId,
-                //    s.SubjectId
-                //});
+            //.IncludeProperties(s => new
+            //{
+            //    s.StudentId,
+            //    s.SubjectId
+            //});
             #endregion
             //modelBuilder.Entity<Group>()
             //    .Property(g => g.Name)
             //    .HasComputedColumnSql("");
+        }
+        private SqlConnectionStringBuilder GetSqlConnectionStringBuilder()
+        {
+            SqlConnectionStringBuilder sqlConnectionStringBuilder = new SqlConnectionStringBuilder();
+            sqlConnectionStringBuilder.DataSource = "WIN-DHV0BQSLTCR";
+            sqlConnectionStringBuilder.UserID = "SQLFirst";
+            sqlConnectionStringBuilder.Password = "Test1234";
+            sqlConnectionStringBuilder.InitialCatalog = "University";
+            return sqlConnectionStringBuilder;
         }
     }
 }

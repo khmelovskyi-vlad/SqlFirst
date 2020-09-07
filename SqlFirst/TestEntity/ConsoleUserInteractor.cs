@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TestEntity
 {
@@ -75,7 +73,7 @@ namespace TestEntity
                 }
                 else
                 {
-                    Console.WriteLine("Bed input, try again");
+                    Console.WriteLine("Bad input, try again");
                 }
             }
         }
@@ -195,7 +193,7 @@ namespace TestEntity
                     }
                     else
                     {
-                        Console.WriteLine("Bed input, try again");
+                        Console.WriteLine("Bad input, try again");
                     }
                 }
                 catch (FormatException ex)
@@ -253,10 +251,213 @@ namespace TestEntity
             }
         }
 
-        public string ReadCommant()
+        public Mode ReadMode()
         {
-            var line = Console.ReadLine();
-            return "";
+            WriteInstruction();
+            while (true)
+            {
+                var key = Console.ReadKey(true);
+                if (key.Key == ConsoleKey.S && key.Modifiers == ConsoleModifiers.Control)
+                {
+                    return Mode.AddScore;
+                }
+                else if (key.Key == ConsoleKey.S)
+                {
+                    return Mode.AddStudent;
+                }
+                else if (key.Key == ConsoleKey.D)
+                {
+                    return Mode.ShowData;
+                }
+                else if (key.Key == ConsoleKey.I)
+                {
+                    return Mode.Initialize;
+                }
+                else if (key.Key == ConsoleKey.P)
+                {
+                    return Mode.Procedure;
+                }
+                else if (key.Key == ConsoleKey.C && key.Modifiers == ConsoleModifiers.Control)
+                {
+                    return Mode.ShowCleverStudent;
+                }
+                else if (key.Key == ConsoleKey.C)
+                {
+                    return Mode.ShowStudentScoresCount;
+                }
+                else
+                {
+                    Console.WriteLine("Bad input, try again");
+                }
+            }
+        }
+        private void WriteInstruction()
+        {
+            Console.WriteLine("If you want to add a new score, click 'CTRL + s'");
+            Console.WriteLine("If you want to add a new student, click 's'");
+            Console.WriteLine("If you want to watch some data, click 'd'");
+            Console.WriteLine("If you want to initialize data, click 'i'");
+            Console.WriteLine("If you want to start a procedure, click 'p'");
+            Console.WriteLine("If you want to watch clever student, click 'c'");
+            Console.WriteLine("If you want to watch a student scores count, click 'CTRL + c'");
+        }
+
+        public DataType SelectDataType()
+        {
+            Console.WriteLine("If you want to watch students, write 'students'");
+            Console.WriteLine("If you want to watch scores, write 'scores'");
+            Console.WriteLine("If you want to watch groups, write 'groups'");
+            Console.WriteLine("If you want to watch courses, write 'courses'");
+            Console.WriteLine("If you want to watch subjects, write 'subjects'");
+            Console.WriteLine("If you want to watch specialties, write 'specialties'");
+            while (true)
+            {
+                var line = Console.ReadLine();
+                switch (line)
+                {
+                    case "students":
+                        return DataType.Student;
+                    case "scores":
+                        return DataType.Score;
+                    case "groups":
+                        return DataType.Group;
+                    case "courses":
+                        return DataType.Course;
+                    case "subjects":
+                        return DataType.Subject;
+                    case "specialties":
+                        return DataType.Specialty;
+                    default:
+                        Console.WriteLine("Bad input, try again");
+                        break;
+                }
+            }
+        }
+        private int ReadPageNumber(int count)
+        {
+            if (count > 1)
+            {
+                while (true)
+                {
+                    Console.WriteLine($"Have {count} pages");
+                    Console.WriteLine("Write a page number");
+                    try
+                    {
+                        var pageNumber = Convert.ToInt32(Console.ReadLine());
+                        if (pageNumber > 0 && pageNumber < count)
+                        {
+                            return pageNumber;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Bad input, try again");
+                        }
+
+                    }
+                    catch (FormatException ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+                }
+            }
+            else
+            {
+                return count;
+            }
+        }
+
+        public void ShowStudents(List<Student> students)
+        {
+            if (students == null || students.Count == 0)
+            {
+                Console.WriteLine("Don't have students");
+            }
+            else
+            {
+                while (true)
+                {
+                    var pageNumber = ReadPageNumber(students.Count / 20);
+                }
+            }
+        }
+        private void ShowSomeStudents(List<Student> students, int pageNumber)
+        {
+            var firstStudent = students[0];
+            var needStudents = students.Take(20).OrderBy(student => "");
+            var columnNames = new string[] { nameof(firstStudent.FirstName), nameof(firstStudent.LastName), nameof(firstStudent.AverageScore), nameof(firstStudent.Group.Name) };
+            for (int i = 0; i < columnNames.Length; i++)
+            {
+                Console.Write($"{columnNames,-20}");
+                if (i < columnNames.Length - 1)
+                {
+                    Console.Write("|");
+                }
+            }
+            Console.WriteLine();
+
+            foreach (var student in needStudents)
+            {
+                Console.WriteLine($"{student.FirstName,-20} | {student.LastName,-20} | {student.AverageScore,-20} | {student.Group.Name}");
+            }
+        }
+        private string ReadNeedSort(string[] columnNames)
+        {
+            while (true)
+            {
+                Console.WriteLine("Write what to sort by?");
+                foreach (var columnName in columnNames)
+                {
+                    Console.WriteLine(columnName);
+                }
+                var line = Console.ReadLine();
+                foreach (var columnName in columnNames)
+                {
+                    if (columnName == line)
+                    {
+                        return line;
+                    }
+                }
+                Console.WriteLine("Bad input, try again");
+            }
+        }
+        public void ShowScores(List<Score> scores)
+        {
+            while (true)
+            {
+                var pageNumber = ReadPageNumber(scores.Count / 20);
+            }
+        }
+
+        public void ShowGroups(List<Group> groups)
+        {
+            while (true)
+            {
+                var pageNumber = ReadPageNumber(groups.Count / 20);
+            }
+        }
+
+        public void ShowCourses(List<Course> courses)
+        {
+            while (true)
+            {
+                var pageNumber = ReadPageNumber(courses.Count / 20);
+            }
+        }
+
+        public void ShowSubjects(List<Subject> subjects)
+        {
+            while (true)
+            {
+                var pageNumber = ReadPageNumber(subjects.Count / 20);
+            }
+        }
+
+        public void ShowSpecialties(List<Specialty> specialties)
+        {
+            while (true)
+            {
+                var pageNumber = ReadPageNumber(specialties.Count / 20);
+            }
         }
     }
 }

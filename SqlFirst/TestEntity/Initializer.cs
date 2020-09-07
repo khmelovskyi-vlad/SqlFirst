@@ -161,7 +161,7 @@ namespace TestEntity
                                 SubjectId = subject.Id,
                                 Course = course,
                                 CourseId = course.Id,
-                                Value = random.Next(0, 6)
+                                Value = random.Next(1, 6)
                             })).Entity);
                         }
                     }
@@ -222,6 +222,63 @@ namespace TestEntity
                     .ToListAsync();
             }
         }
+        public async Task<List<Student>> GetStudents()
+        {
+            using (var university = new UniversityContext())
+            {
+                return await university.Students
+                    .Include(student => student.Group)
+                    .ToListAsync();
+            }
+        }
+        public async Task<List<Score>> GetScores()
+        {
+            using (var university = new UniversityContext())
+            {
+                return await university.Scores
+                    .Include(score => score.Course)
+                    .Include(score => score.Subject)
+                    .Include(score => score.Student)
+                    .ToListAsync();
+            }
+        }
+        public async Task<List<Group>> GetGroups()
+        {
+            using (var university = new UniversityContext())
+            {
+                return await university.Groups
+                    .Include(group => group.Course)
+                    .Include(group => group.Specialty)
+                    .ToListAsync();
+            }
+        }
+        public async Task<List<Course>> GetCourses()
+        {
+            using (var university = new UniversityContext())
+            {
+                return await university.Courses.ToListAsync();
+            }
+        }
+        public async Task<List<Subject>> GetSubjects()
+        {
+            using (var university = new UniversityContext())
+            {
+                return await university.Subjects
+                    .Where(subject => subject.SubjectCourses != null && subject.SubjectSpecialties != null)
+                    .Include(subject => subject.SubjectCourses)
+                    .ThenInclude(subjectCourse => subjectCourse.Course)
+                    .Include(subject => subject.SubjectSpecialties)
+                    .ThenInclude(subjectSpecialty => subjectSpecialty.Specialty)
+                    .ToListAsync();
+            }
+        }
+        public async Task<List<Specialty>> GetSpecialties()
+        {
+            using (var university = new UniversityContext())
+            {
+                return await university.Specialties.ToListAsync();
+            }
+        }
         private async Task<List<Student>> GetAllStudents()
         {
             using (var university = new UniversityContext())
@@ -229,7 +286,7 @@ namespace TestEntity
                 return await university.Students
                     .Include(student => student.Group)
                     //.ThenInclude(group => group.Specialty)
-                    .Include(student => student.Group)
+                    //.Include(student => student.Group)
                     //.ThenInclude(group => group.Course)
                     .ToListAsync();
             }
