@@ -15,7 +15,9 @@
 --)
 --WHILE @subjectCount > 0
 --BEGIN
-
+DECLARE @st VARCHAR(MAX) 
+EXEC [dbo].[PickRandomString2] 200, 500, 'qwedfvdhn', @st OUTPUT
+print(@st)
 --	INSERT INTO #TempSubjectsCourses
 --	(SubjectId, CourseId)
 --	VALUES

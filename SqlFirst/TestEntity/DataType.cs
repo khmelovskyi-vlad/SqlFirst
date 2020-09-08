@@ -13,6 +13,8 @@ namespace TestEntity
         Group,
         Course,
         Subject,
-        Specialty
+        Specialty,
+        StudentScoresCount,
+        CleverStudents
     }
 }

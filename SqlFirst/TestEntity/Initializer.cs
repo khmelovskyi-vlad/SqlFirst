@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -169,43 +170,50 @@ namespace TestEntity
             }
             return scores.ToArray();
         }
-        public async Task FirstInitializeData()
+        public async Task<bool> FirstInitializeData()
         {
             Random random = new Random();
             using (var context = new UniversityContext())
             {
-                var courses = await AddCourses(context);
-                var specialties = await AddRandomSpecialties(context, random);
-                var subjects = await AddRandomSubjects(context, random);
-                var subjectSpecialties = await AddRandomSubjectSpecialties(context, subjects, specialties, random);
-                var subjectCourses = await AddRandomSubjectCourses(context, subjects, courses, random);
-                var groups = await AddGroups(context, courses, specialties);
-                var students = await AddRandomStudents(context, groups, random);
-                var scores = await AddRandomScores(context, students, subjects, courses, random);
-                await context.SaveChangesAsync();
+                if ((await context.Courses.ToListAsync()).Count > 0 || (await context.Specialties.ToListAsync()).Count > 0 || (await context.Subjects.ToListAsync()).Count > 0 
+                    || (await context.SubjectSpecialties.ToListAsync()).Count > 0 || (await context.SubjectCourses.ToListAsync()).Count > 0 
+                    || (await context.Groups.ToListAsync()).Count > 0 || (await context.Students.ToListAsync()).Count > 0 || (await context.Scores.ToListAsync()).Count > 0)
+                {
+                    return false;
+                }
+                else
+                {
+                    var courses = await AddCourses(context);
+                    var specialties = await AddRandomSpecialties(context, random);
+                    var subjects = await AddRandomSubjects(context, random);
+                    var subjectSpecialties = await AddRandomSubjectSpecialties(context, subjects, specialties, random);
+                    var subjectCourses = await AddRandomSubjectCourses(context, subjects, courses, random);
+                    var groups = await AddGroups(context, courses, specialties);
+                    var students = await AddRandomStudents(context, groups, random);
+                    var scores = await AddRandomScores(context, students, subjects, courses, random);
+                    await context.SaveChangesAsync();
+                    return true;
+                }
             }
         }
-        public async Task AddStudents()
+        public async Task AddStudents(List<Student> students)
         {
-            var students = userInteractor.ReadStudents(await GetAllGroups());
             using (var university = new UniversityContext())
             {
                 await university.Students.AddRangeAsync(students);
                 await university.SaveChangesAsync();
             }
         }
-        public async Task AddScore()
+        public async Task AddScores(List<Score> scores)
         {
-            var scores = userInteractor.ReadScores(await GetAllStudents(), await GetAllSubjects());
             using (var university = new UniversityContext())
             {
                 await university.Scores.AddRangeAsync(scores);
                 await university.SaveChangesAsync();
             }
         }
-        public async Task ChangeScore()
+        public async Task ChangeScores(List<Score> scores)
         {
-            var scores = userInteractor.ReadScoresToChange(await GetAllScores(), await GetAllStudents());
             using (var university = new UniversityContext())
             {
                 university.Scores.UpdateRange(scores);
@@ -220,6 +228,22 @@ namespace TestEntity
                     .Include(score => score.Course)
                     .Include(score => score.Subject)
                     .ToListAsync();
+            }
+        }
+        public async Task<List<StudentScoresCount>> GetStudentScoresCount()
+        {
+            using (var university = new UniversityContext())
+            {
+                return await university.StudentScoresCounts
+                    .ToListAsync();
+            }
+        }
+        public async Task<List<Student>> GetCleverStudents(SqlParameter sqlParameter)
+        {
+            using (var university = new UniversityContext())
+            {
+                return await university.Students.FromSqlRaw("SELECT * " +
+                    "FROM GetCleverStudents(@maxFoursCount)", sqlParameter).ToListAsync();
             }
         }
         public async Task<List<Student>> GetStudents()
@@ -239,6 +263,7 @@ namespace TestEntity
                     .Include(score => score.Course)
                     .Include(score => score.Subject)
                     .Include(score => score.Student)
+                    .ThenInclude(student => student.Group)
                     .ToListAsync();
             }
         }
@@ -279,18 +304,6 @@ namespace TestEntity
                 return await university.Specialties.ToListAsync();
             }
         }
-        private async Task<List<Student>> GetAllStudents()
-        {
-            using (var university = new UniversityContext())
-            {
-                return await university.Students
-                    .Include(student => student.Group)
-                    //.ThenInclude(group => group.Specialty)
-                    //.Include(student => student.Group)
-                    //.ThenInclude(group => group.Course)
-                    .ToListAsync();
-            }
-        }
         private async Task<List<Subject>> GetAllSubjects()
         {
             using (var university = new UniversityContext())
@@ -302,13 +315,6 @@ namespace TestEntity
                     .Include(subject => subject.SubjectSpecialties)
                     //.ThenInclude(subjectSpecialty => subjectSpecialty.Specialty)
                     .ToListAsync();
-            }
-        }
-        private async Task<List<Group>> GetAllGroups()
-        {
-            using (var university = new UniversityContext())
-            {
-                return await university.Groups.Include(group => group.Course).Include(group => group.Specialty).ToListAsync();
             }
         }
 

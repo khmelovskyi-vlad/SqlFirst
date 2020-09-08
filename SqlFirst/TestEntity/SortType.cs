@@ -6,13 +6,9 @@ using System.Threading.Tasks;
 
 namespace TestEntity
 {
-    enum Mode
+    enum SortType
     {
-        Initialize,
-        AddStudent,
-        AddScores,
-        ChangeScores,
-        Procedure,
-        ShowData
+        InOriginalOrder,
+        InOppositeOrder
     }
 }

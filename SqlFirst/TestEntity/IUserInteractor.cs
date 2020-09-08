@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,7 +11,7 @@ namespace TestEntity
     {
         List<Student> ReadStudents(List<Group> groups);
         List<Score> ReadScores(List<Student> students, List<Subject> subjects);
-        List<Score> ReadScoresToChange(List<Score> scores, List<Student> students);
+        List<Score> ReadScoresToChange(List<Score> scores);
         Mode ReadMode();
         DataType SelectDataType();
         void ShowStudents(List<Student> students);
@@ -19,5 +20,8 @@ namespace TestEntity
         void ShowCourses(List<Course> courses);
         void ShowSubjects(List<Subject> subjects);
         void ShowSpecialties(List<Specialty> specialties);
+        void ShowStudentScoresCount(List<StudentScoresCount> studentScoresCounts);
+        SqlParameter ReadMaxFoursCount();
+        void WriteLine(string line);
     }
 }

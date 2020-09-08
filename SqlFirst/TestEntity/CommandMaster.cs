@@ -23,30 +23,67 @@ namespace TestEntity
                 switch (mode)
                 {
                     case Mode.Initialize:
-                        await initializer.FirstInitializeData();
+                        await FirstInitialize();
                         break;
                     case Mode.AddStudent:
-                        await initializer.AddStudents();
+                        await AddStudents();
                         break;
-                    case Mode.AddScore:
-                        await initializer.AddScore();
+                    case Mode.AddScores:
+                        await AddScores();
+                        break;
+                    case Mode.ChangeScores:
+                        await ChangeScores();
                         break;
                     case Mode.Procedure:
                         break;
-                    case Mode.ShowCleverStudent:
-                        break;
-                    case Mode.ShowStudentScoresCount:
-                        break;
                     case Mode.ShowData:
+                        await ShowData();
                         break;
                     default:
                         break;
                 }
             }
         }
+        private async Task ChangeScores()
+        {
+            var allScores = await initializer.GetScores();
+            var newScores = userInteractor.ReadScoresToChange(allScores);
+            await initializer.ChangeScores(newScores);
+        }
+        private async Task AddScores()
+        {
+            var students = await initializer.GetStudents();
+            var subjects = await initializer.GetSubjects();//must be GetAllSubjects()?
+            var scores = userInteractor.ReadScores(students, subjects);
+            await initializer.AddScores(scores);
+        }
+        private async Task AddStudents()
+        {
+            var groups = await initializer.GetGroups();
+            var newStudents = userInteractor.ReadStudents(groups);
+            await initializer.AddStudents(newStudents);
+        }
         private async Task FirstInitialize()
         {
-           await initializer.FirstInitializeData();
+            if (await initializer.FirstInitializeData())
+            {
+                userInteractor.WriteLine("Data was initialized");
+            }
+            else
+            {
+                userInteractor.WriteLine("Data wasn't initialized, because it was initially initialized");
+            }
+        }
+        private async Task ShowStudentScoresCount()
+        {
+            var studentScoresCount = await initializer.GetStudentScoresCount();
+            userInteractor.ShowStudentScoresCount(studentScoresCount);
+        }
+        private async Task ShowCleverStudents()
+        {
+            var maxFoursCount = userInteractor.ReadMaxFoursCount();
+            var cleverStudents = await initializer.GetCleverStudents(maxFoursCount);
+            userInteractor.ShowStudents(cleverStudents);
         }
         private async Task ShowData()
         {
@@ -70,6 +107,12 @@ namespace TestEntity
                     break;
                 case DataType.Specialty:
                     userInteractor.ShowSpecialties(await initializer.GetSpecialties());
+                    break;
+                case DataType.CleverStudents:
+                    await ShowCleverStudents();
+                    break;
+                case DataType.StudentScoresCount:
+                    await ShowStudentScoresCount();
                     break;
                 default:
                     break;

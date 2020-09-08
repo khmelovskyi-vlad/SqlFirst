@@ -93,6 +93,9 @@
     <Build Include="RandomInitializators\AddStudentAverageScoresTrigger.sql" />
     <Build Include="RandomInitializators\AddGroupAverageScoresTrigger.sql" />
     <Build Include="Procedures\ShowSomeStudents.sql" />
+    <Build Include="Functions\PickRandomChar2.sql" />
+    <Build Include="Functions\RandIntBetween2.sql" />
+    <Build Include="Procedures\PickRandomString2.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Initializators\FillGroupsOld.sql" />

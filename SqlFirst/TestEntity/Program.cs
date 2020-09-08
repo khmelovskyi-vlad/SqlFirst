@@ -10,21 +10,106 @@ namespace TestEntity
 {
     class Program
     {
+        private static object Foo(Score score, string sv)
+        {
+            if (sv == "Value")
+            {
+                return score.Value;
+            }
+            else
+            {
+                return score.Id;
+            }
+        }
         static async Task<int> Main(string[] args)
         {
             using (var db = new UniversityContext())
             {
-                var scores = db.Scores.ToList();
-                foreach (var score in scores)
+                var par1 = new SqlParameter("@studentsCount", 10);
+                var s = db.Students.FromSqlRaw("ShowSomeStudents @studentsCount", par1).ToList();
+                foreach (var s1 in s)
                 {
-                    Console.WriteLine(score.Value);
+                    Console.WriteLine(s1.FirstName);
                 }
-                Console.WriteLine("next");
-                var needScores = scores.OrderBy(score => score);
-                foreach (var score in needScores)
+            }
+            var userInteractor = new ConsoleUserInteractor();
+            CommandMaster commandMaster = new CommandMaster(userInteractor, new Initializer(userInteractor));
+            await commandMaster.Run();
+            using (var db = new UniversityContext())
+            {
+                var subjects = await db.Subjects
+                    .Where(subject => subject.SubjectCourses != null && subject.SubjectSpecialties != null)
+                    .Include(subject => subject.SubjectCourses)
+                    .ThenInclude(subjectCourse => subjectCourse.Course)
+                    .Include(subject => subject.SubjectSpecialties)
+                    .ThenInclude(subjectSpecialty => subjectSpecialty.Specialty)
+                    .ToListAsync();
+                var courses = await db.Courses.Include(course => course.SubjectCourses).ThenInclude(sc => sc.Subject).ToListAsync();
+                var specialties = await db.Specialties.Include(spec => spec.SubjectSpecialties).ThenInclude(ss => ss.Subject).ToListAsync();
+                var allSt = 0;
+                foreach (var course in courses)
                 {
-                    Console.WriteLine(score.Value);
+                    foreach (var specialty in specialties)
+                    {
+                        var l = course.SubjectCourses.Join(specialty.SubjectSpecialties,
+                            subCo => subCo.Subject,
+                            subSpec => subSpec.Subject,
+                            (subCo, subspec) => new { course = subCo.Course.Name, spec = subspec.Specialty.Name, subject = subCo.Subject.Name });
+                        allSt = allSt + l.Count();
+                    }
                 }
+                var res = courses.Join(specialties,
+                    course => course.SubjectCourses.Select(subCo => subCo.SubjectId),
+                    spec => spec.SubjectSpecialties.Select(ss => ss.SubjectId),
+                    (course, spec) => new
+                    {
+                        course,
+                        spec
+                    }).ToList();
+                Console.WriteLine(allSt);
+                var allSt2 = 0;
+                var result = subjects.SelectMany(subject => subject.SubjectCourses.Join(subject.SubjectSpecialties,
+                        subCo => subCo.Subject,
+                        subSpec => subSpec.Subject,
+                        (subCo, subspec) => new { course = subCo.Course.Name, spec = subspec.Specialty.Name, subject = subCo.Subject.Name }));
+                Console.WriteLine(result.Count());
+                foreach (var subject in subjects)
+                {
+                    var l = subject.SubjectCourses.Join(subject.SubjectSpecialties,
+                        subCo => subCo.Subject,
+                        subSpec => subSpec.Subject,
+                        (subCo, subspec) => new { course = subCo.Course.Name, spec = subspec.Specialty.Name, subject = subCo.Subject.Name });
+                    allSt2 = allSt2 + l.Count();
+                }
+                Console.WriteLine(allSt2);
+                //foreach (var item in l)
+                //{
+                //    Console.WriteLine($"{item.course}-{item.spec}-{item.subject}");
+                //}
+
+                //var oih = subjects.Select(sub => sub.SubjectCourses.).toList();
+                //var sub = subjects.GroupBy(
+                //    subject => subject.SubjectCourses,
+                //    subject => subject.SubjectSpecialties,
+                //    (subCo, subSpec) => new
+                //    {
+                //        course = subCo.Select(scc => scc.Course),
+                //        specialty = subSpec(ss => ss.)
+                //    }
+                //    );
+                //var scores = db.Scores.ToList();
+                //foreach (var score in scores)
+                //{
+                //    Console.WriteLine(score.Value);
+                //}
+                //Console.WriteLine("next");
+                //var sc = scores[0];
+                //var sv = nameof(sc.Value);
+                //var needScores = scores.OrderBy(score =>Foo(score,sv)).Take(200);
+                //foreach (var score in needScores)
+                //{
+                //    Console.WriteLine(score.Value);
+                //}
                 Console.ReadLine();
             }
                 using (var db = new UniversityContext())
@@ -91,8 +176,8 @@ namespace TestEntity
             //}
             Initializer initializer = new Initializer(new ConsoleUserInteractor());
             await initializer.FirstInitializeData();
-            await initializer.ChangeScore();
-            await initializer.AddScore();
+            //await initializer.ChangeScores();
+            //await initializer.AddScore();
             await initializer.FirstInitializeData();
             using (var db = new UniversityContext())
             {
