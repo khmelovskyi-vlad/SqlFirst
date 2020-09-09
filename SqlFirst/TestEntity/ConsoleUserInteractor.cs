@@ -279,9 +279,13 @@ namespace TestEntity
                 {
                     return Mode.Initialize;
                 }
-                else if (key.Key == ConsoleKey.P)
+                else if (key.Key == ConsoleKey.R)
                 {
-                    return Mode.Procedure;
+                    return Mode.RandomString;
+                }
+                else if (key.Key == ConsoleKey.U)
+                {
+                    return Mode.UpdateData;
                 }
                 else
                 {
@@ -296,7 +300,8 @@ namespace TestEntity
             Console.WriteLine("If you want to add new students, click 's'");
             Console.WriteLine("If you want to watch some data, click 'd'");
             Console.WriteLine("If you want to initialize data, click 'i'");
-            Console.WriteLine("If you want to start a procedure, click 'p'");
+            Console.WriteLine("If you want to take a random string, click 'r'");
+            Console.WriteLine("If you want to update data, click 'u'");
         }
 
         public DataType SelectDataType()
@@ -309,6 +314,7 @@ namespace TestEntity
             Console.WriteLine("If you want to watch specialties, write 'specialties'");
             Console.WriteLine("If you want to watch clever students, write 'clever students'");
             Console.WriteLine("If you want to watch a student scores count, write 'student scores count'");
+            Console.WriteLine("If you want to watch a number of scores on courses, write 'number courses scores'");
             while (true)
             {
                 var line = Console.ReadLine();
@@ -330,6 +336,8 @@ namespace TestEntity
                         return DataType.CleverStudents;
                     case "student scores count":
                         return DataType.StudentScoresCount;
+                    case "number courses scores":
+                        return DataType.NumberCoursesScores;
                     default:
                         Console.WriteLine("Bad input, try again");
                         break;
@@ -1045,22 +1053,53 @@ namespace TestEntity
 
         public SqlParameter ReadMaxFoursCount()
         {
-            var parameter = new SqlParameter();
-            parameter.ParameterName = "@maxFoursCount";
+            return new SqlParameter("@maxFoursCount", ReadPositiveNumber("Write a maximum of fours count"));
+        }
+
+        public void WriteLine(string line)
+        {
+            Console.WriteLine(line);
+        }
+
+        public SqlParameter[] ReadParametersForString()
+        {
+            var minLength = new SqlParameter("@minLength", ReadPositiveNumber("Write the minimum string length"));
+            var maxLength = new SqlParameter("@maxLength", ReadPositiveNumber("Write the maximum string length"));
+            var chars = new SqlParameter("@chars", ReadChars("Write the characters in the string"));
+            var randomString = new SqlParameter() { ParameterName = "@randomString", Size = Convert.ToInt32(@maxLength.Value), Direction = System.Data.ParameterDirection.Output };
+            return new SqlParameter[] { minLength, maxLength, chars, randomString };
+        }
+        private string ReadChars(string offer)
+        {
+            while (true)
+            {
+                Console.WriteLine(offer);
+                var chars = Console.ReadLine();
+                if (chars.Length > 0)
+                {
+                    return chars;
+                }
+                else
+                {
+                    Console.WriteLine("Characters must be greater than 0");
+                }
+            }
+        }
+        private int ReadPositiveNumber(string offer)
+        {
             while (true)
             {
                 try
                 {
-                    Console.WriteLine("Write a maximum of fours count");
-                    var maxFoursCount = Convert.ToInt32(Console.ReadLine());
-                    if (maxFoursCount >= 0)
+                    Console.WriteLine(offer);
+                    var number = Convert.ToInt32(Console.ReadLine());
+                    if (number >= 0)
                     {
-                        parameter.Value = maxFoursCount;
-                        return parameter;
+                        return number;
                     }
                     else
                     {
-                        Console.WriteLine("The number of fours must be greater than 0");
+                        Console.WriteLine("The number must be greater than or equal to 0");
                     }
                 }
                 catch (FormatException ex)
@@ -1070,9 +1109,25 @@ namespace TestEntity
             }
         }
 
-        public void WriteLine(string line)
+        public string CreateSql()
         {
-            Console.WriteLine(line);
+            Console.WriteLine("Write the sql command");
+            return Console.ReadLine();
+        }
+
+        public void WriteRowsNumberAffected(int rowsNumberAffected)
+        {
+            Console.WriteLine($"{rowsNumberAffected} row(s) affected");
+        }
+
+        public void ShowNumberCoursesScores(List<NumberCourseScores> numberCoursesScores)
+        {
+            var columns = new string[] { "Course name", "Count scores" };
+            ShowColumns(columns);
+            foreach (var numberCourseScores in numberCoursesScores)
+            {
+                Console.WriteLine($"{numberCourseScores.CourseName,-20} | {numberCourseScores.Count}");
+            }
         }
     }
 }

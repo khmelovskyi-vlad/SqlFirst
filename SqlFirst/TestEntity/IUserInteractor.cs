@@ -23,5 +23,9 @@ namespace TestEntity
         void ShowStudentScoresCount(List<StudentScoresCount> studentScoresCounts);
         SqlParameter ReadMaxFoursCount();
         void WriteLine(string line);
+        SqlParameter[] ReadParametersForString();
+        string CreateSql();
+        void WriteRowsNumberAffected(int rowsNumberAffected);
+        void ShowNumberCoursesScores(List<NumberCourseScores> numberCoursesScores);
     }
 }

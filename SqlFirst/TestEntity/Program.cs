@@ -23,8 +23,98 @@ namespace TestEntity
         }
         static async Task<int> Main(string[] args)
         {
+            CommandMaster commandMaster = new CommandMaster(new ConsoleUserInteractor(), new Initializer());
+            await commandMaster.Run();
+            using (var un = new UniversityContext())
+            {
+                var scores = await un.Scores.Include(score => score.Course).ToListAsync();
+                var result = scores.GroupBy(
+                    score => score.Course,
+                    score => score.Id,
+                    (key, scoress) => new
+                    {
+                        courseName = key.Name,
+                        count = scoress.Count()
+                    }
+                    ).OrderBy(course => course.courseName);
+                foreach (var course in result)
+                {
+                    Console.WriteLine($"course name = {course.courseName}, score count = {course.count}");
+                }
+                var tr2 = un.Database.ExecuteSqlRaw("CREATE TRIGGER [AddGroupAverageScoresTrigger] " +
+                          "ON [dbo].[Scores] " +
+                          "AFTER INSERT, DELETE, UPDATE " +
+                          "AS " +
+                          "BEGIN " +
+                          "     UPDATE [dbo].[Groups] " +
+                          "     SET AverageScore = ( " +
+                          "     SELECT AVG(st.[AverageScore]) " +
+                          "     FROM [dbo].[Students] st " +
+                          "     WHERE st.GroupId = [dbo].[Groups].Id) " +
+                          "     FROM [dbo].[Groups] " +
+                          "     JOIN [dbo].[Students] st ON st.GroupId = [dbo].[Groups].Id " +
+                          "     JOIN inserted i ON i.StudentId = st.Id " +
+                          "END");
+                var tr = un.Database.ExecuteSqlRaw("CREATE TRIGGER [AddStudentAverageScoresTrigger] " +
+                         "ON [dbo].[Scores] " +
+                         "AFTER INSERT, DELETE, UPDATE " +
+                         "AS " +
+                         "BEGIN " +
+                         "    UPDATE [dbo].[Students] " +
+                         "    SET AverageScore = ( " +
+                         "    SELECT AVG(sc.[Value]) " +
+                         "    FROM inserted i " +
+                         "    JOIN [dbo].[Scores] sc ON sc.StudentId = i.StudentId " +
+                         "    WHERE sc.StudentId = [dbo].[Students].Id) " +
+                         "    FROM [dbo].[Students] " +
+                         "    JOIN inserted i ON i.StudentId = [dbo].[Students].Id " +
+                         "END");
+
+                var res = un.Database.ExecuteSqlRaw("UPDATE [dbo].[Scores] " +
+                    "SET [Value] = 5 " +
+                    "WHERE Id = '60392978-87a5-4516-8457-0182ffec6cf9'");
+                Console.WriteLine(res);
+                var ascsac = un.Subjects.ToList();
+                un.Subjects.RemoveRange(ascsac);
+                un.SaveChanges();
+                var ascsasdac = un.Courses.ToList();
+                un.Courses.RemoveRange(ascsasdac);
+                un.SaveChanges();
+                var ascsasdfsdac = un.Specialties.ToList();
+                un.Specialties.RemoveRange(ascsasdfsdac);
+                un.SaveChanges();
+
+
+
+
+                //var scores = await un.Scores.Where(sc => sc.Value == 10).ToListAsync();
+            }
             using (var db = new UniversityContext())
             {
+                var @minLength = new SqlParameter("@minLength", 20);
+                var @maxLength = new SqlParameter("@maxLength", 200);
+                var @chars = new SqlParameter("@chars", "qwertyuioasdfghjkl");
+                var @randomString = new SqlParameter() { ParameterName = "@randomString", Value = "asasdasd", Size = 200, Direction = System.Data.ParameterDirection.Output };
+                var res = await db.Database.ExecuteSqlRawAsync("[dbo].[PickRandomString] @minLength, @maxLength, @chars, @randomString OUTPUT", @minLength, @maxLength, @chars, @randomString);
+                Console.WriteLine(randomString.Value);
+
+                var mes = "CREATE PROCEDURE [dbo].[PickRandomString] " +
+                                        "  @minLength INT, " +
+                                        "  @maxLength INT, " +
+                                        "  @chars VARCHAR(200), " +
+                                        "  @randomString VARCHAR(MAX) = NULL OUTPUT " +
+                                        "AS " +
+                                        "  DECLARE @stringLength INT = " +
+                                        "  (SELECT * FROM [dbo].[RandIntBetween](@minLength, @maxLength, RAND())) " +
+                                        "  SET @randomString = '' " +
+                                        "  WHILE LEN(@randomString) < @stringLength " +
+                                        "  BEGIN " +
+                                        "    SET @randomString = @randomString + (SELECT * FROM [dbo].[PickRandomChar](@chars, RAND())) " +
+                                        "  END " +
+                                        "RETURN 0";
+
+
+                var adsad = db.Database.ExecuteSqlRaw(mes);
                 var par1 = new SqlParameter("@studentsCount", 10);
                 var s = db.Students.FromSqlRaw("ShowSomeStudents @studentsCount", par1).ToList();
                 foreach (var s1 in s)
@@ -32,9 +122,6 @@ namespace TestEntity
                     Console.WriteLine(s1.FirstName);
                 }
             }
-            var userInteractor = new ConsoleUserInteractor();
-            CommandMaster commandMaster = new CommandMaster(userInteractor, new Initializer(userInteractor));
-            await commandMaster.Run();
             using (var db = new UniversityContext())
             {
                 var subjects = await db.Subjects
@@ -174,7 +261,7 @@ namespace TestEntity
             //    db.Specialties.RemoveRange(db.Specialties);
             //    await db.SaveChangesAsync();
             //}
-            Initializer initializer = new Initializer(new ConsoleUserInteractor());
+            Initializer initializer = new Initializer();
             await initializer.FirstInitializeData();
             //await initializer.ChangeScores();
             //await initializer.AddScore();

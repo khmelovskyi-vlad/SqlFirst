@@ -34,15 +34,31 @@ namespace TestEntity
                     case Mode.ChangeScores:
                         await ChangeScores();
                         break;
-                    case Mode.Procedure:
+                    case Mode.RandomString:
+                        await GetRandomString();
                         break;
                     case Mode.ShowData:
                         await ShowData();
+                        break;
+                    case Mode.UpdateData:
+                        await UpdateData();
                         break;
                     default:
                         break;
                 }
             }
+        }
+        private async Task UpdateData()
+        {
+            var sql = userInteractor.CreateSql();
+            var RowsNumberAffected = await initializer.UpdateData(sql);
+            userInteractor.WriteRowsNumberAffected(RowsNumberAffected);
+        }
+        private async Task GetRandomString()
+        {
+            var parameters = userInteractor.ReadParametersForString();
+            var randomString = await initializer.CreateRandomString(parameters);
+            userInteractor.WriteLine(randomString);
         }
         private async Task ChangeScores()
         {
@@ -85,6 +101,26 @@ namespace TestEntity
             var cleverStudents = await initializer.GetCleverStudents(maxFoursCount);
             userInteractor.ShowStudents(cleverStudents);
         }
+        private async Task ShowNumberCoursesScores()
+        {
+            var scores = await initializer.GetScores();
+            var numberCoursesScores = FillNumberCoursesScores(scores);
+            userInteractor.ShowNumberCoursesScores(numberCoursesScores);
+        }
+        private List<NumberCourseScores> FillNumberCoursesScores(List<Score> scores)
+        {
+            return scores.GroupBy(
+                score => score.Course,
+                score => score.Id,
+                (key, scoress) => new NumberCourseScores
+                (
+                    key.Name,
+                    scoress.Count()
+                )
+                )
+                .OrderBy(course => course.CourseName)
+                .ToList();
+        }
         private async Task ShowData()
         {
             var dataType = userInteractor.SelectDataType();
@@ -113,6 +149,9 @@ namespace TestEntity
                     break;
                 case DataType.StudentScoresCount:
                     await ShowStudentScoresCount();
+                    break;
+                case DataType.NumberCoursesScores:
+                    await ShowNumberCoursesScores();
                     break;
                 default:
                     break;

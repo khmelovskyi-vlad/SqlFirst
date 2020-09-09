@@ -15,6 +15,7 @@ namespace TestEntity
         Subject,
         Specialty,
         StudentScoresCount,
-        CleverStudents
+        CleverStudents,
+        NumberCoursesScores
     }
 }

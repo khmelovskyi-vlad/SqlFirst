@@ -20,6 +20,9 @@ namespace TestEntity
         public DbSet<SubjectCourse> SubjectCourses { get; set; }
         public DbSet<SubjectSpecialty> SubjectSpecialties { get; set; }
         public DbSet<StudentScoresCount> StudentScoresCounts { get; set; }
+        
+
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlServer(new SqlConnection(GetSqlConnectionStringBuilder().ConnectionString));

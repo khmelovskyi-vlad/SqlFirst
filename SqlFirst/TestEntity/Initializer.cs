@@ -11,11 +11,10 @@ namespace TestEntity
 {
     class Initializer
     {
-        public Initializer(IUserInteractor userInteractor)
+        public Initializer()
         {
-            this.userInteractor = userInteractor;
+
         }
-        private IUserInteractor userInteractor;
 
         private async Task<Course[]> AddCourses(UniversityContext context)
         {
@@ -43,6 +42,16 @@ namespace TestEntity
             }
             return specialties;
         }
+
+        public async Task<string> CreateRandomString(SqlParameter[] parameters)
+        {
+            using (var university = new UniversityContext())
+            {
+                await university.Database.ExecuteSqlRawAsync("[dbo].[PickRandomString] @minLength, @maxLength, @chars, @randomString OUTPUT", parameters);
+                return parameters.Where(parameter => parameter.ParameterName == "@randomString").First().Value.ToString();
+            }
+        }
+
         private async Task<Subject[]> AddRandomSubjects(UniversityContext context, Random random)
         {
             Subject[] subjects = new Subject[1000];
@@ -121,7 +130,7 @@ namespace TestEntity
 
         private async Task<Student[]> AddRandomStudents(UniversityContext context, Group[] groups, Random random)
         {
-            Student[] students = new Student[1];
+            Student[] students = new Student[5];
             for (int i = 0; i < students.Length; i++)
             {
                 var indexGroup = random.Next(0, groups.Length);
@@ -220,16 +229,6 @@ namespace TestEntity
                 await university.SaveChangesAsync();
             }
         }
-        private async Task<List<Score>> GetAllScores()
-        {
-            using (var university = new UniversityContext())
-            {
-                return await university.Scores
-                    .Include(score => score.Course)
-                    .Include(score => score.Subject)
-                    .ToListAsync();
-            }
-        }
         public async Task<List<StudentScoresCount>> GetStudentScoresCount()
         {
             using (var university = new UniversityContext())
@@ -317,6 +316,15 @@ namespace TestEntity
                     .ToListAsync();
             }
         }
+        public async Task<int> UpdateData(string sql)
+        {
+            using (var university = new UniversityContext())
+            {
+                return await university.Database.ExecuteSqlRawAsync(sql);
+            }
+        }
+
+
 
 
         private string CreateRandomString(int minLength, int maxLenght, string chars, Random random)

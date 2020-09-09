@@ -179,6 +179,7 @@
     </Compile>
     <Compile Include="Migrations\UniversityContextModelSnapshot.cs" />
     <Compile Include="Mode.cs" />
+    <Compile Include="NumberCoursesScores.cs" />
     <Compile Include="Score.cs" />
     <Compile Include="SortInformation.cs" />
     <Compile Include="SortType.cs" />

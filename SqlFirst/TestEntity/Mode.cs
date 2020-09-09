@@ -12,7 +12,8 @@ namespace TestEntity
         AddStudent,
         AddScores,
         ChangeScores,
-        Procedure,
-        ShowData
+        RandomString,
+        ShowData,
+        UpdateData
     }
 }
