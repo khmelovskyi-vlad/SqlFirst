@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace TestEntity
 {
@@ -253,7 +254,7 @@ namespace TestEntity
             }
         }
 
-        public Mode ReadMode()
+        public ManipulationDataMode ReadMode()
         {
             WriteInstruction();
             while (true)
@@ -261,31 +262,31 @@ namespace TestEntity
                 var key = Console.ReadKey(true);
                 if (key.Key == ConsoleKey.S && key.Modifiers == ConsoleModifiers.Control)
                 {
-                    return Mode.AddScores;
+                    return ManipulationDataMode.AddScores;
                 }
                 else if (key.Key == ConsoleKey.S && key.Modifiers == ConsoleModifiers.Shift)
                 {
-                    return Mode.ChangeScores;
+                    return ManipulationDataMode.ChangeScores;
                 }
                 else if (key.Key == ConsoleKey.S)
                 {
-                    return Mode.AddStudent;
+                    return ManipulationDataMode.AddStudent;
                 }
                 else if (key.Key == ConsoleKey.D)
                 {
-                    return Mode.ShowData;
+                    return ManipulationDataMode.ShowData;
                 }
                 else if (key.Key == ConsoleKey.I)
                 {
-                    return Mode.Initialize;
+                    return ManipulationDataMode.Initialize;
                 }
                 else if (key.Key == ConsoleKey.R)
                 {
-                    return Mode.RandomString;
+                    return ManipulationDataMode.RandomString;
                 }
                 else if (key.Key == ConsoleKey.U)
                 {
-                    return Mode.UpdateData;
+                    return ManipulationDataMode.UpdateData;
                 }
                 else
                 {
@@ -355,7 +356,7 @@ namespace TestEntity
                     try
                     {
                         var pageNumber = Convert.ToInt32(Console.ReadLine());
-                        if (pageNumber > 0 && pageNumber < count)
+                        if (pageNumber > 0 && pageNumber <= count)
                         {
                             return pageNumber;
                         }
@@ -376,38 +377,78 @@ namespace TestEntity
                 return count;
             }
         }
-
-        public void ShowStudents(List<Student> students)
+        public void ShowData<TEntity>(IQueryable<TEntity> source)
         {
-            if (students == null || students.Count == 0)
+            if (source == null || source.Count() == 0)
             {
-                Console.WriteLine("Don't have students");
+                Console.WriteLine("Don't have data");
             }
             else
             {
-                var columnNames = new string[] { "First name", "Last name", "Average score", "Group name" };
-                var sortInformation = ReadNeedSortInformation(columnNames.ToList());
-                var pageNumber = ReadPageNumber(students.Count / 20);
+                var pageCount = source.Count() / 20;
+                var columnsInformationames = CreateColumnsInformation<TEntity>();
+                var sortInformation = ReadNeedSortInformation(columnsInformationames.Columns.ToList());
+                var pageNumber = ReadPageNumber(pageCount);
                 while (true)
                 {
-                    var needStudents = FindNeedStudents(students, sortInformation, pageNumber);
-                    ShowColumns(columnNames);
-                    ShowSomeStudents(needStudents);
+                    var needData = OrderBy(source, sortInformation).Skip(pageNumber * 20).Take(20);
+                    Console.WriteLine(needData.Count());
+                    ShowColumns(columnsInformationames.Columns.Select(column => column.Name).ToArray());
+                    columnsInformationames.Action.Invoke(needData);
                     if (CheckNeedContinue("If you want to exit, click 'Enter'"))
                     {
                         return;
                     }
                     if (CheckNeedContinue("If you want to change sort information, click 'Enter'"))
                     {
-                        sortInformation = ReadNeedSortInformation(columnNames.ToList());
+                        sortInformation = ReadNeedSortInformation(columnsInformationames.Columns.ToList());
                     }
                     if (CheckNeedContinue("If you want to change page number, click 'Enter'"))
                     {
-                        pageNumber = ReadPageNumber(students.Count / 20);
+                        pageNumber = ReadPageNumber(pageCount);
                     }
                 }
             }
         }
+        private void ShowSomeStudents<TEntity>(IQueryable<TEntity> students)
+        {
+            foreach (var studentEn in students)
+            {
+                var student = (Student)Convert.ChangeType(studentEn, typeof(TEntity));
+                Console.WriteLine($"{student.FirstName,-20} | {student.LastName,-20} | {student.AverageScore,-20} | {student.Group.Name}");
+            }
+        }
+        //public void ShowStudents(IQueryable<Student> students)
+        //{
+        //    if (students == null || students.Count() == 0)
+        //    {
+        //        Console.WriteLine("Don't have students");
+        //    }
+        //    else
+        //    {
+        //        var columnNames = new string[] { "First name", "Last name", "Average score", "Group name" };
+        //        var sortInformation = ReadNeedSortInformation(columnNames.ToList());
+        //        var pageNumber = ReadPageNumber(students.Count() / 20);
+        //        while (true)
+        //        {
+        //            var needStudents = OrderBy(students, sortInformation/*, pageNumber*/);
+        //            ShowColumns(columnNames);
+        //            ShowSomeStudents(needStudents);
+        //            if (CheckNeedContinue("If you want to exit, click 'Enter'"))
+        //            {
+        //                return;
+        //            }
+        //            if (CheckNeedContinue("If you want to change sort information, click 'Enter'"))
+        //            {
+        //                sortInformation = ReadNeedSortInformation(columnNames.ToList());
+        //            }
+        //            if (CheckNeedContinue("If you want to change page number, click 'Enter'"))
+        //            {
+        //                pageNumber = ReadPageNumber(students.Count() / 20);
+        //            }
+        //        }
+        //    }
+        //}
         private bool CheckNeedContinue(string offer)
         {
             Console.WriteLine(offer);
@@ -429,112 +470,153 @@ namespace TestEntity
             }
             Console.WriteLine();
         }
-        private void ShowSomeStudents(List<Student> students)
+        private IQueryable<TEntity> OrderBy<TEntity>(IQueryable<TEntity> source, List<Sort> sorts)
         {
-            foreach (var student in students)
+            if (sorts.Count() > 0)
             {
-                Console.WriteLine($"{student.FirstName,-20} | {student.LastName,-20} | {student.AverageScore,-20} | {student.Group.Name}");
-            }
-        }
-        private List<Student> FindNeedStudents(List<Student> students, SortInformation sortInformation, int pageNumber)
-        {
-            if (sortInformation.sortType == SortType.InOriginalOrder)
-            {
-                switch (sortInformation.SortColumns.Count)
+                source = OrderBy(source, sorts[0].Field, sorts[0].IsDescending ? "OrderByDescending" : "OrderBy");
+                for (int i = 1; i < sorts.Count; i++)
                 {
-                    case 0:
-                        return students.Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 1:
-                        return students.OrderBy(student => GetSortStudentColumn(student, sortInformation.SortColumns[0]))
-                            .Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 2:
-                        return students.OrderBy(student => GetSortStudentColumn(student, sortInformation.SortColumns[0]))
-                            .ThenBy(student => GetSortStudentColumn(student, sortInformation.SortColumns[1])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 3:
-                        return students.OrderBy(student => GetSortStudentColumn(student, sortInformation.SortColumns[0]))
-                            .ThenBy(student => GetSortStudentColumn(student, sortInformation.SortColumns[1]))
-                            .ThenBy(student => GetSortStudentColumn(student, sortInformation.SortColumns[2])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 4:
-                        return students.OrderBy(student => GetSortStudentColumn(student, sortInformation.SortColumns[0]))
-                            .ThenBy(student => GetSortStudentColumn(student, sortInformation.SortColumns[1]))
-                            .ThenBy(student => GetSortStudentColumn(student, sortInformation.SortColumns[2]))
-                            .ThenBy(student => GetSortStudentColumn(student, sortInformation.SortColumns[3])).Skip((pageNumber - 1) * 20).Take(20).ToList();
+                    source = OrderBy(source, sorts[i].Field, sorts[i].IsDescending ? "ThenByDescending" : "ThenBy");
                 }
+                return source;
             }
-            else if (sortInformation.sortType == SortType.InOppositeOrder)
+            else
             {
-                switch (sortInformation.SortColumns.Count)
-                {
-                    case 0:
-                        return students.AsEnumerable().Reverse().Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 1:
-                        return students.OrderByDescending(student => GetSortStudentColumn(student, sortInformation.SortColumns[0]))
-                            .Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 2:
-                        return students.OrderByDescending(student => GetSortStudentColumn(student, sortInformation.SortColumns[0]))
-                            .ThenByDescending(student => GetSortStudentColumn(student, sortInformation.SortColumns[1])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 3:
-                        return students.OrderByDescending(student => GetSortStudentColumn(student, sortInformation.SortColumns[0]))
-                            .ThenByDescending(student => GetSortStudentColumn(student, sortInformation.SortColumns[1]))
-                            .ThenByDescending(student => GetSortStudentColumn(student, sortInformation.SortColumns[2])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 4:
-                        return students.OrderByDescending(student => GetSortStudentColumn(student, sortInformation.SortColumns[0]))
-                            .ThenByDescending(student => GetSortStudentColumn(student, sortInformation.SortColumns[1]))
-                            .ThenByDescending(student => GetSortStudentColumn(student, sortInformation.SortColumns[2]))
-                            .ThenByDescending(student => GetSortStudentColumn(student, sortInformation.SortColumns[3])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                }
+                return source;
             }
-            return students;
         }
-        private object GetSortStudentColumn(Student student, string needColumn)
+        class ColumnsInformation<TEntity>
         {
-            switch (needColumn)
+            public ColumnsInformation()
             {
-                case "First name":
-                    return student.FirstName;
-                case "Last name":
-                    return student.LastName;
-                case "Average score":
-                    return student.AverageScore;
-                case "Group name":
-                    return student.Group.Name;
-                default:
-                    return student.Id;
             }
+            public ColumnsInformation(Column[] columns, Action<IQueryable<TEntity>> action)
+            {
+                Columns = columns;
+                Action = action;
+            }
+            public Column[] Columns { get; set; }
+            public Action<IQueryable<TEntity>> Action { get; set; }
         }
-        private SortInformation ReadNeedSortInformation(List<string> columnNames)
+        private ColumnsInformation<TEntity> CreateColumnsInformation<TEntity>()
+        {
+            var entityType = typeof(TEntity);
+            if (entityType == typeof(Student))
+            {
+                return new ColumnsInformation<TEntity>(new Column[] { new Column("First name", CreateField(entityType, new string[]{ "FirstName" })),
+                    new Column("Last name", CreateField(entityType, new string[]{ "LastName" })),
+                    new Column("Average score", CreateField(entityType, new string[]{ "AverageScore" })),
+                    new Column("Group name", CreateField(entityType, new string[]{ "Group", "Name" }))
+                },
+                    (source) => ShowSomeStudents(source));
+            }
+            else if (entityType == typeof(Score))
+            {
+                return new ColumnsInformation<TEntity>(new Column[] { new Column("Score", CreateField(entityType, new string[]{ "Value" })),
+                    new Column("First name", CreateField(entityType, new string[]{ "Student", "FirstName" })),
+                    new Column("Last name", CreateField(entityType, new string[]{ "Student", "LastName" })),
+                    new Column("Group name", CreateField(entityType, new string[]{ "Student", "Group", "Name" })),
+                    new Column("Subject name", CreateField(entityType, new string[]{ "Subject", "Name" })),
+                    new Column("Course name", CreateField(entityType, new string[]{ "Course", "Name" }))
+                },
+                    (source) => ShowSomeScores(source));
+            }
+            else if (entityType == typeof(Group))
+            {
+                return new ColumnsInformation<TEntity>(new Column[] { new Column("Group name", CreateField(entityType, new string[]{ "Name" })),
+                    new Column("Average score", CreateField(entityType, new string[]{ "AverageScore" })),
+                    new Column("Course name", CreateField(entityType, new string[]{ "Course", "Name" })),
+                    new Column("Specialty name", CreateField(entityType, new string[]{ "Specialty", "Name" }))
+                },
+                    (source) => ShowSomeGroups(source));
+            }
+            else if (entityType == typeof(Course))
+            {
+                return new ColumnsInformation<TEntity>(new Column[] { new Column("Course name", CreateField(entityType, new string[]{ "Name" }))
+                },
+                    (source) => ShowSomeCourses(source));
+            }
+            else if (entityType == typeof(SubjectPrototype))
+            {
+                return new ColumnsInformation<TEntity>(new Column[] { new Column("Subject name", CreateField(entityType, new string[]{ "SubjectName" })),
+                    new Column("Course score", CreateField(entityType, new string[]{ "CourseName" })),
+                    new Column("Specialty name", CreateField(entityType, new string[]{ "SpecialtyName" }))
+                },
+                    (source) => ShowSomeSubjects(source));
+            }
+            else if (entityType == typeof(Specialty))
+            {
+                return new ColumnsInformation<TEntity>(new Column[] { new Column("Specialty name", CreateField(entityType, new string[]{ "Name" }))
+                },
+                    (source) => ShowSomeSpecialties(source));
+            }
+            else if (entityType == typeof(StudentScoresCount))
+            {
+                return new ColumnsInformation<TEntity>(new Column[] { new Column("Id", CreateField(entityType, new string[]{ "Id" })),
+                    new Column("Student first name", CreateField(entityType, new string[]{ "FirstName" })),
+                    new Column("Student last name", CreateField(entityType, new string[]{ "LastName" })),
+                    new Column("Score count", CreateField(entityType, new string[]{ "ScoreCount" }))
+                },
+                    (source) => ShowStudentScoresCount(source));
+            }
+            return new ColumnsInformation<TEntity>();
+        }
+        private Field CreateField(Type type, string[] fieldNames)
+        {
+            var property = type.GetProperty(fieldNames[0]);
+            var parameter = Expression.Parameter(type, "parameter");
+            var orderByAccess = Expression.MakeMemberAccess(parameter, property);
+            for (var i = 1; i < fieldNames.Length; i++)
+            {
+                property = property.PropertyType.GetProperty(fieldNames[i]);
+                orderByAccess = Expression.MakeMemberAccess(orderByAccess, property);
+            }
+            return new Field(property.PropertyType, parameter, orderByAccess);
+        }
+        private IQueryable<TEntity> OrderBy<TEntity>(IQueryable<TEntity> source, Field field, string functionName)
+        {
+            var type = typeof(TEntity);
+            var orderByExpression = Expression.Lambda(field.Access, field.AccessParameter);
+            var resultExpression = Expression.Call(typeof(Queryable), functionName, new Type[] { type, field.Type }, source.Expression, Expression.Quote(orderByExpression));
+            return source.Provider.CreateQuery<TEntity>(resultExpression);
+        }
+
+        private List<Sort> ReadNeedSortInformation(List<Column> columns)
         {
             if (CheckNeedAddMore("If you want to sort data, click 'Enter'"))
             {
-                SortInformation sortInformation = new SortInformation();
-                sortInformation.sortType = ReadSortType();
-                Console.WriteLine("Write what to sort by?");
+                List<Sort> sorts = new List<Sort>();
                 while (true)
                 {
-                    var findName = false;
-                    foreach (var columnName in columnNames)
+                    Column needColumn = null;
+                    Sort sort = new Sort();
+                    sort.IsDescending = ReadSortType();
+                    Console.WriteLine("Write what to sort by?");
+                    foreach (var column in columns)
                     {
-                        Console.WriteLine(columnName);
+                        Console.WriteLine(column.Name);
                     }
                     var line = Console.ReadLine();
-                    foreach (var columnName in columnNames)
+                    foreach (var column in columns)
                     {
-                        if (columnName == line)
+                        if (column.Name == line)
                         {
-                            findName = true;
+                            needColumn = column;
                         }
                     }
-                    if (findName)
+                    if (needColumn != null)
                     {
-                        sortInformation.SortColumns.Add(line);
-                        columnNames.Remove(line);
-                        if (columnNames.Count == 0)
+                        sort.Field = needColumn.Field;
+                        sorts.Add(sort);
+                        columns.Remove(needColumn);
+                        if (columns.Count == 0)
                         {
-                            return sortInformation;
+                            return sorts;
                         }
                         if (!CheckNeedAddMore("If you want to sort more columns, click 'Enter'"))
                         {
-                            return sortInformation;
+                            return sorts;
                         }
                         Console.WriteLine("Write what to sort by next?");
                     }
@@ -542,511 +624,305 @@ namespace TestEntity
                     {
                         if (!CheckNeedAddMore("Bad input, if you want to sort columns, click 'Enter'"))
                         {
-                            return sortInformation;
+                            return sorts;
                         }
                     }
                 }
             }
             else
             {
-                return new SortInformation();
+                return new List<Sort>();
             }
         }
-        private SortType ReadSortType()
+        private bool ReadSortType()
         {
             Console.WriteLine("If you want to sort data in original order, click 'Enter'");
             Console.WriteLine("If you want to sort the data in the opposite order, click else");
             if (Console.ReadKey(true).Key == ConsoleKey.Enter)
             {
-                return SortType.InOriginalOrder;
+                return false;
             }
-            return SortType.InOppositeOrder;
+            return true;
         }
-        public void ShowScores(List<Score> scores)
-        {
-            if (scores == null || scores.Count == 0)
-            {
-                Console.WriteLine("Don't have students");
-            }
-            else
-            {
-                var columnNames = new string[] { "Score", "Student first name", "Student last name", "Group name", "Subject name", "Course name" };
-                var sortInformation = ReadNeedSortInformation(columnNames.ToList());
-                var pageNumber = ReadPageNumber(scores.Count / 20);
-                while (true)
-                {
-                    var needScores = FindNeedScores(scores, sortInformation, pageNumber);
-                    ShowColumns(columnNames);
-                    ShowSomeScores(needScores);
-                    if (CheckNeedContinue("If you want to exit, click 'Enter'"))
-                    {
-                        return;
-                    }
-                    if (CheckNeedContinue("If you want to change sort information, click 'Enter'"))
-                    {
-                        sortInformation = ReadNeedSortInformation(columnNames.ToList());
-                    }
-                    if (CheckNeedContinue("If you want to change page number, click 'Enter'"))
-                    {
-                        pageNumber = ReadPageNumber(scores.Count / 20);
-                    }
-                }
-            }
-        }
+        //private void ShowSomeStudents(IQueryable<Student> students)
+        //{
+        //    foreach (var student in students)
+        //    {
+        //        Console.WriteLine($"{student.FirstName,-20} | {student.LastName,-20} | {student.AverageScore,-20} | {student.Group.Name}");
+        //    }
+        //}
+        //public void ShowScores(List<Score> scores)
+        //{
+        //    if (scores == null || scores.Count == 0)
+        //    {
+        //        Console.WriteLine("Don't have students");
+        //    }
+        //    else
+        //    {
+        //        var columnNames = new string[] { "Score", "Student first name", "Student last name", "Group name", "Subject name", "Course name" };
+        //        var sortInformation = ReadNeedSortInformation(columnNames.ToList());
+        //        var pageNumber = ReadPageNumber(scores.Count / 20);
+        //        while (true)
+        //        {
+        //            var needScores = FindNeedScores(scores, sortInformation, pageNumber);
+        //            ShowColumns(columnNames);
+        //            ShowSomeScores(needScores);
+        //            if (CheckNeedContinue("If you want to exit, click 'Enter'"))
+        //            {
+        //                return;
+        //            }
+        //            if (CheckNeedContinue("If you want to change sort information, click 'Enter'"))
+        //            {
+        //                sortInformation = ReadNeedSortInformation(columnNames.ToList());
+        //            }
+        //            if (CheckNeedContinue("If you want to change page number, click 'Enter'"))
+        //            {
+        //                pageNumber = ReadPageNumber(scores.Count / 20);
+        //            }
+        //        }
+        //    }
+        //}
 
-        private void ShowSomeScores(List<Score> scores)
+
+        //public void ShowGroups(List<Group> groups)
+        //{
+        //    if (groups == null || groups.Count == 0)
+        //    {
+        //        Console.WriteLine("Don't have students");
+        //    }
+        //    else
+        //    {
+        //        var columnNames = new string[] { "Group name", "Average score", "Course name", "Specialty name" };
+        //        var sortInformation = ReadNeedSortInformation(columnNames.ToList());
+        //        var pageNumber = ReadPageNumber(groups.Count / 20);
+        //        while (true)
+        //        {
+        //            var needGroups = FindNeedGroups(groups, sortInformation, pageNumber);
+        //            ShowColumns(columnNames);
+        //            ShowSomeGroups(needGroups);
+        //            if (CheckNeedContinue("If you want to exit, click 'Enter'"))
+        //            {
+        //                return;
+        //            }
+        //            if (CheckNeedContinue("If you want to change sort information, click 'Enter'"))
+        //            {
+        //                sortInformation = ReadNeedSortInformation(columnNames.ToList());
+        //            }
+        //            if (CheckNeedContinue("If you want to change page number, click 'Enter'"))
+        //            {
+        //                pageNumber = ReadPageNumber(groups.Count / 20);
+        //            }
+        //        }
+        //    }
+        //}
+
+        //public void ShowCourses(List<Course> courses)
+        //{
+        //    if (courses == null || courses.Count == 0)
+        //    {
+        //        Console.WriteLine("Don't have students");
+        //    }
+        //    else
+        //    {
+        //        var columnNames = new string[] { "Course name" };
+        //        var sortInformation = ReadNeedSortInformation(columnNames.ToList());
+        //        var pageNumber = ReadPageNumber(courses.Count / 20);
+        //        while (true)
+        //        {
+        //            var needCourses = FindNeedCourses(courses, sortInformation, pageNumber);
+        //            ShowColumns(columnNames);
+        //            ShowSomeCourses(needCourses);
+        //            if (CheckNeedContinue("If you want to exit, click 'Enter'"))
+        //            {
+        //                return;
+        //            }
+        //            if (CheckNeedContinue("If you want to change sort information, click 'Enter'"))
+        //            {
+        //                sortInformation = ReadNeedSortInformation(columnNames.ToList());
+        //            }
+        //            if (CheckNeedContinue("If you want to change page number, click 'Enter'"))
+        //            {
+        //                pageNumber = ReadPageNumber(courses.Count / 20);
+        //            }
+        //        }
+        //    }
+        //}
+
+
+        //public void ShowSubjects(List<Subject> subjects)
+        //{
+        //    if (subjects == null || subjects.Count == 0)
+        //    {
+        //        Console.WriteLine("Don't have students");
+        //    }
+        //    else
+        //    {
+        //        var columnNames = new string[] { "Subject name", "Course name", "Specialty name"};
+        //        var sortInformation = ReadNeedSortInformation(columnNames.ToList());
+        //        var pageNumber = ReadPageNumber(subjects.Count / 20);
+        //        var subjectPrototypes = subjects.SelectMany(subject => subject.SubjectCourses.Join(subject.SubjectSpecialties,
+        //                subCo => subCo.Subject,
+        //                subSpec => subSpec.Subject,
+        //                (subCo, subspec) => new SubjectPrototype (subCo.Subject.Name, subCo.Course.Name, subspec.Specialty.Name ))).ToList();
+        //        while (true)
+        //        {
+        //            var needSubjects = FindNeedSubjects(subjectPrototypes, sortInformation, pageNumber);
+        //            ShowColumns(columnNames);
+        //            ShowSomeSubjects(needSubjects);
+        //            if (CheckNeedContinue("If you want to exit, click 'Enter'"))
+        //            {
+        //                return;
+        //            }
+        //            if (CheckNeedContinue("If you want to change sort information, click 'Enter'"))
+        //            {
+        //                sortInformation = ReadNeedSortInformation(columnNames.ToList());
+        //            }
+        //            if (CheckNeedContinue("If you want to change page number, click 'Enter'"))
+        //            {
+        //                pageNumber = ReadPageNumber(subjects.Count / 20);
+        //            }
+        //        }
+        //    }
+        //}
+        //private List<SubjectPrototype> FindNeedSubjects(List<SubjectPrototype> subjects, Sort sortInformation, int pageNumber)
+        //{
+        //    if (sortInformation.sortType == SortType.InOriginalOrder)
+        //    {
+        //        switch (sortInformation.SortColumns.Count)
+        //        {
+        //            case 0:
+        //                return subjects.Skip((pageNumber - 1) * 20).Take(20).ToList();
+        //            case 1:
+        //                return subjects.OrderBy(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[0])).Skip((pageNumber - 1) * 20).Take(20).ToList();
+        //            case 2:
+        //                return subjects.OrderBy(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[0]))
+        //                    .ThenBy(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[1])).Skip((pageNumber - 1) * 20).Take(20).ToList();
+        //            case 3:
+        //                return subjects.OrderBy(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[0]))
+        //                    .ThenBy(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[1]))
+        //                    .ThenBy(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[2])).Skip((pageNumber - 1) * 20).Take(20).ToList();
+        //        }
+        //    }
+        //    else if(sortInformation.sortType == SortType.InOppositeOrder)
+        //    {
+        //        switch (sortInformation.SortColumns.Count)
+        //        {
+        //            case 0:
+        //                return subjects.AsEnumerable().Reverse().Skip((pageNumber - 1) * 20).Take(20).ToList();
+        //            case 1:
+        //                return subjects.OrderByDescending(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[0])).Skip((pageNumber - 1) * 20).Take(20).ToList();
+        //            case 2:
+        //                return subjects.OrderByDescending(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[0]))
+        //                    .ThenByDescending(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[1])).Skip((pageNumber - 1) * 20).Take(20).ToList();
+        //            case 3:
+        //                return subjects.OrderByDescending(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[0]))
+        //                    .ThenByDescending(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[1]))
+        //                    .ThenByDescending(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[2])).Skip((pageNumber - 1) * 20).Take(20).ToList();
+        //        }
+        //    }
+        //    return subjects;
+        //}
+
+        //private object GetSortSubjectColumn(SubjectPrototype subject, string needColumn)
+        //{
+        //    switch (needColumn)
+        //    {
+        //        case "Subject name":
+        //            return subject.SubjectName;
+        //        case "Course name":
+        //            return subject.CourseName;
+        //        case "Specialty name":
+        //            return subject.SpecialtyName;
+        //        default:
+        //            return "";
+        //    }
+        //}
+
+        //public void ShowSpecialties(List<Specialty> specialties)
+        //{
+        //    if (specialties == null || specialties.Count == 0)
+        //    {
+        //        Console.WriteLine("Don't have students");
+        //    }
+        //    else
+        //    {
+        //        var columnNames = new string[] { "Specialty name" };
+        //        var sortInformation = ReadNeedSortInformation(columnNames.ToList());
+        //        var pageNumber = ReadPageNumber(specialties.Count / 20);
+        //        while (true)
+        //        {
+        //            var needSpecialties = FindNeedSpecialties(specialties, sortInformation, pageNumber);
+        //            ShowColumns(columnNames);
+        //            ShowSomeSpecialties(needSpecialties);
+        //            if (CheckNeedContinue("If you want to exit, click 'Enter'"))
+        //            {
+        //                return;
+        //            }
+        //            if (CheckNeedContinue("If you want to change sort information, click 'Enter'"))
+        //            {
+        //                sortInformation = ReadNeedSortInformation(columnNames.ToList());
+        //            }
+        //            if (CheckNeedContinue("If you want to change page number, click 'Enter'"))
+        //            {
+        //                pageNumber = ReadPageNumber(specialties.Count / 20);
+        //            }
+        //        }
+        //    }
+        //}
+
+        private void ShowSomeScores<TEntity>(IQueryable<TEntity> scores)
         {
-            foreach (var score in scores)
+            foreach (var entityScore in scores)
             {
+                var score = (Score)Convert.ChangeType(entityScore, typeof(TEntity));
                 Console.WriteLine($"{score.Value,-20} | {score.Student.FirstName,-20} | {score.Student.LastName,-20} | {score.Student.Group.Name}" +
                     $" | {score.Subject.Name,-20} | {score.Course.Name}");
             }
         }
-
-        private List<Score> FindNeedScores(List<Score> scores, SortInformation sortInformation, int pageNumber)
+        private void ShowSomeGroups<TEntity>(IQueryable<TEntity> groups)
         {
-            if (sortInformation.sortType == SortType.InOriginalOrder)
+            foreach (var entityGroup in groups)
             {
-                switch (sortInformation.SortColumns.Count)
-                {
-                    case 0:
-                        return scores.Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 1:
-                        return scores.OrderBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[0])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 2:
-                        return scores.OrderBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[0]))
-                            .ThenBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[1])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 3:
-                        return scores.OrderBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[0]))
-                            .ThenBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[1]))
-                            .ThenBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[2])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 4:
-                        return scores.OrderBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[0]))
-                            .ThenBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[1]))
-                            .ThenBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[2]))
-                            .ThenBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[3])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 5:
-                        return scores.OrderBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[0]))
-                            .ThenBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[1]))
-                            .ThenBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[2]))
-                            .ThenBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[3]))
-                            .ThenBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[4])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 6:
-                        return scores.OrderBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[0]))
-                            .ThenBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[1]))
-                            .ThenBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[2]))
-                            .ThenBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[3]))
-                            .ThenBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[4]))
-                            .ThenBy(score => GetSortScoreColumn(score, sortInformation.SortColumns[5])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                }
-            }
-            else
-            {
-                switch (sortInformation.SortColumns.Count)
-                {
-                    case 0:
-                        return scores.AsEnumerable().Reverse().Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 1:
-                        return scores.OrderByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[0])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 2:
-                        return scores.OrderByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[0]))
-                            .ThenByDescending(group => GetSortScoreColumn(group, sortInformation.SortColumns[1])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 3:
-                        return scores.OrderByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[0]))
-                            .ThenByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[1]))
-                            .ThenByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[2])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 4:
-                        return scores.OrderByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[0]))
-                            .ThenByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[1]))
-                            .ThenByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[2]))
-                            .ThenByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[3])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 5:
-                        return scores.OrderByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[0]))
-                            .ThenByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[1]))
-                            .ThenByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[2]))
-                            .ThenByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[3]))
-                            .ThenByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[4])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 6:
-                        return scores.OrderByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[0]))
-                            .ThenByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[1]))
-                            .ThenByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[2]))
-                            .ThenByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[3]))
-                            .ThenByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[4]))
-                            .ThenByDescending(score => GetSortScoreColumn(score, sortInformation.SortColumns[5])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                }
-            }
-            return scores;
-        }
-
-        private object GetSortScoreColumn(Score score, string needColumn)
-        {
-            switch (needColumn)
-            {
-                case "Score":
-                    return score.Value;
-                case "Student first name":
-                    return score.Student.FirstName;
-                case "Student last name":
-                    return score.Student.LastName;
-                case "Group name":
-                    return score.Student.Group.Name;
-                case "Subject name":
-                    return score.Subject.Name;
-                case "Course name":
-                    return score.Course.Name;
-                default:
-                    return "";
-            }
-        }
-
-        public void ShowGroups(List<Group> groups)
-        {
-            if (groups == null || groups.Count == 0)
-            {
-                Console.WriteLine("Don't have students");
-            }
-            else
-            {
-                var columnNames = new string[] { "Group name", "Average score", "Course name", "Specialty name" };
-                var sortInformation = ReadNeedSortInformation(columnNames.ToList());
-                var pageNumber = ReadPageNumber(groups.Count / 20);
-                while (true)
-                {
-                    var needGroups = FindNeedGroups(groups, sortInformation, pageNumber);
-                    ShowColumns(columnNames);
-                    ShowSomeGroups(needGroups);
-                    if (CheckNeedContinue("If you want to exit, click 'Enter'"))
-                    {
-                        return;
-                    }
-                    if (CheckNeedContinue("If you want to change sort information, click 'Enter'"))
-                    {
-                        sortInformation = ReadNeedSortInformation(columnNames.ToList());
-                    }
-                    if (CheckNeedContinue("If you want to change page number, click 'Enter'"))
-                    {
-                        pageNumber = ReadPageNumber(groups.Count / 20);
-                    }
-                }
-            }
-        }
-
-        private List<Group> FindNeedGroups(List<Group> groups, SortInformation sortInformation, int pageNumber)
-        {
-            if (sortInformation.sortType == SortType.InOriginalOrder)
-            {
-                switch (sortInformation.SortColumns.Count)
-                {
-                    case 0:
-                        return groups.Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 1:
-                        return groups.OrderBy(group => GetSortGroupColumn(group, sortInformation.SortColumns[0])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 2:
-                        return groups.OrderBy(group => GetSortGroupColumn(group, sortInformation.SortColumns[0]))
-                            .ThenBy(group => GetSortGroupColumn(group, sortInformation.SortColumns[1])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 3:
-                        return groups.OrderBy(group => GetSortGroupColumn(group, sortInformation.SortColumns[0]))
-                            .ThenBy(group => GetSortGroupColumn(group, sortInformation.SortColumns[1]))
-                            .ThenBy(group => GetSortGroupColumn(group, sortInformation.SortColumns[2])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 4:
-                        return groups.OrderBy(group => GetSortGroupColumn(group, sortInformation.SortColumns[0]))
-                            .ThenBy(group => GetSortGroupColumn(group, sortInformation.SortColumns[1]))
-                            .ThenBy(group => GetSortGroupColumn(group, sortInformation.SortColumns[2]))
-                            .ThenBy(group => GetSortGroupColumn(group, sortInformation.SortColumns[3])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                }
-            }
-            else
-            {
-                switch (sortInformation.SortColumns.Count)
-                {
-                    case 0:
-                        return groups.AsEnumerable().Reverse().Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 1:
-                        return groups.OrderByDescending(group => GetSortGroupColumn(group, sortInformation.SortColumns[0])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 2:
-                        return groups.OrderByDescending(group => GetSortGroupColumn(group, sortInformation.SortColumns[0]))
-                            .ThenByDescending(group => GetSortGroupColumn(group, sortInformation.SortColumns[1])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 3:
-                        return groups.OrderByDescending(group => GetSortGroupColumn(group, sortInformation.SortColumns[0]))
-                            .ThenByDescending(group => GetSortGroupColumn(group, sortInformation.SortColumns[1]))
-                            .ThenByDescending(group => GetSortGroupColumn(group, sortInformation.SortColumns[2])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 4:
-                        return groups.OrderByDescending(group => GetSortGroupColumn(group, sortInformation.SortColumns[0]))
-                            .ThenByDescending(group => GetSortGroupColumn(group, sortInformation.SortColumns[1]))
-                            .ThenByDescending(group => GetSortGroupColumn(group, sortInformation.SortColumns[2]))
-                            .ThenByDescending(group => GetSortGroupColumn(group, sortInformation.SortColumns[3])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                }
-            }
-            return groups;
-        }
-
-        private object GetSortGroupColumn(Group group, string needColumn)
-        {
-            switch (needColumn)
-            {
-                case "Group name":
-                    return group.Name;
-                case "Average score":
-                    return group.AverageScore;
-                case "Course name":
-                    return group.Course.Name;
-                case "Specialty name":
-                    return group.Specialty.Name;
-                default:
-                    return "";
-            }
-        }
-        private void ShowSomeGroups(List<Group> groups)
-        {
-            foreach (var group in groups)
-            {
+                var group = (Group)Convert.ChangeType(entityGroup, typeof(TEntity));
                 Console.WriteLine($"{group.Name,-20} | {group.AverageScore,-20} | {group.Course.Name,-20} | {group.Specialty,-20}");
             }
         }
-
-        public void ShowCourses(List<Course> courses)
+        private void ShowSomeCourses<TEntity>(IQueryable<TEntity> courses)
         {
-            if (courses == null || courses.Count == 0)
+            foreach (var entityCourse in courses)
             {
-                Console.WriteLine("Don't have students");
-            }
-            else
-            {
-                var columnNames = new string[] { "Course name" };
-                var sortInformation = ReadNeedSortInformation(columnNames.ToList());
-                var pageNumber = ReadPageNumber(courses.Count / 20);
-                while (true)
-                {
-                    var needCourses = FindNeedCourses(courses, sortInformation, pageNumber);
-                    ShowColumns(columnNames);
-                    ShowSomeCourses(needCourses);
-                    if (CheckNeedContinue("If you want to exit, click 'Enter'"))
-                    {
-                        return;
-                    }
-                    if (CheckNeedContinue("If you want to change sort information, click 'Enter'"))
-                    {
-                        sortInformation = ReadNeedSortInformation(columnNames.ToList());
-                    }
-                    if (CheckNeedContinue("If you want to change page number, click 'Enter'"))
-                    {
-                        pageNumber = ReadPageNumber(courses.Count / 20);
-                    }
-                }
-            }
-        }
-
-        private void ShowSomeCourses(List<Course> courses)
-        {
-            foreach (var course in courses)
-            {
+                var course = (Course)Convert.ChangeType(entityCourse, typeof(TEntity));
                 Console.WriteLine(course.Name);
             }
         }
-
-        private List<Course> FindNeedCourses(List<Course> courses, SortInformation sortInformation, int pageNumber)
+        private void ShowSomeSubjects<TEntity>(IQueryable<TEntity> subjects)
         {
-            if (sortInformation.sortType == SortType.InOriginalOrder)
+            foreach (var entitSubject in subjects)
             {
-                switch (sortInformation.SortColumns.Count)
-                {
-                    case 0:
-                        return courses.Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 1:
-                        return courses.OrderBy(specialty => specialty.Name).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                }
-            }
-            else
-            {
-                switch (sortInformation.SortColumns.Count)
-                {
-                    case 0:
-                        return courses.AsEnumerable().Reverse().Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 1:
-                        return courses.OrderByDescending(specialty => specialty.Name).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                }
-            }
-            return courses;
-        }
-
-        public void ShowSubjects(List<Subject> subjects)
-        {
-            if (subjects == null || subjects.Count == 0)
-            {
-                Console.WriteLine("Don't have students");
-            }
-            else
-            {
-                var columnNames = new string[] { "Subject name", "Course name", "Specialty name"};
-                var sortInformation = ReadNeedSortInformation(columnNames.ToList());
-                var pageNumber = ReadPageNumber(subjects.Count / 20);
-                var subjectPrototypes = subjects.SelectMany(subject => subject.SubjectCourses.Join(subject.SubjectSpecialties,
-                        subCo => subCo.Subject,
-                        subSpec => subSpec.Subject,
-                        (subCo, subspec) => new SubjectPrototype (subCo.Subject.Name, subCo.Course.Name, subspec.Specialty.Name ))).ToList();
-                while (true)
-                {
-                    var needSubjects = FindNeedSubjects(subjectPrototypes, sortInformation, pageNumber);
-                    ShowColumns(columnNames);
-                    ShowSomeSubjects(needSubjects);
-                    if (CheckNeedContinue("If you want to exit, click 'Enter'"))
-                    {
-                        return;
-                    }
-                    if (CheckNeedContinue("If you want to change sort information, click 'Enter'"))
-                    {
-                        sortInformation = ReadNeedSortInformation(columnNames.ToList());
-                    }
-                    if (CheckNeedContinue("If you want to change page number, click 'Enter'"))
-                    {
-                        pageNumber = ReadPageNumber(subjects.Count / 20);
-                    }
-                }
-            }
-        }
-        class SubjectPrototype
-        {
-            public SubjectPrototype(string subjectName, int courseName, string specialtyName)
-            {
-                SubjectName = subjectName;
-                CourseName = courseName;
-                SpecialtyName = specialtyName;
-            }
-            public string SubjectName { get; set; }
-            public int CourseName { get; set; }
-            public string SpecialtyName { get; set; }
-        }
-        private List<SubjectPrototype> FindNeedSubjects(List<SubjectPrototype> subjects, SortInformation sortInformation, int pageNumber)
-        {
-            if (sortInformation.sortType == SortType.InOriginalOrder)
-            {
-                switch (sortInformation.SortColumns.Count)
-                {
-                    case 0:
-                        return subjects.Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 1:
-                        return subjects.OrderBy(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[0])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 2:
-                        return subjects.OrderBy(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[0]))
-                            .ThenBy(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[1])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 3:
-                        return subjects.OrderBy(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[0]))
-                            .ThenBy(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[1]))
-                            .ThenBy(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[2])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                }
-            }
-            else if(sortInformation.sortType == SortType.InOppositeOrder)
-            {
-                switch (sortInformation.SortColumns.Count)
-                {
-                    case 0:
-                        return subjects.AsEnumerable().Reverse().Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 1:
-                        return subjects.OrderByDescending(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[0])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 2:
-                        return subjects.OrderByDescending(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[0]))
-                            .ThenByDescending(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[1])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 3:
-                        return subjects.OrderByDescending(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[0]))
-                            .ThenByDescending(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[1]))
-                            .ThenByDescending(subject => GetSortSubjectColumn(subject, sortInformation.SortColumns[2])).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                }
-            }
-            return subjects;
-        }
-
-        private object GetSortSubjectColumn(SubjectPrototype subject, string needColumn)
-        {
-            switch (needColumn)
-            {
-                case "Subject name":
-                    return subject.SubjectName;
-                case "Course name":
-                    return subject.CourseName;
-                case "Specialty name":
-                    return subject.SpecialtyName;
-                default:
-                    return "";
-            }
-        }
-        private void ShowSomeSubjects(List<SubjectPrototype> subjects)
-        {
-            foreach (var subject in subjects)
-            {
+                var subject = (SubjectPrototype)Convert.ChangeType(entitSubject, typeof(TEntity));
                 Console.WriteLine($"{subject.SubjectName,-20} | {subject.CourseName,-20} | {subject.SpecialtyName}");
             }
         }
-
-        public void ShowSpecialties(List<Specialty> specialties)
+        private void ShowSomeSpecialties<TEntity>(IQueryable<TEntity> specialties)
         {
-            if (specialties == null || specialties.Count == 0)
+            foreach (var entitySpecialty in specialties)
             {
-                Console.WriteLine("Don't have students");
-            }
-            else
-            {
-                var columnNames = new string[] { "Specialty name" };
-                var sortInformation = ReadNeedSortInformation(columnNames.ToList());
-                var pageNumber = ReadPageNumber(specialties.Count / 20);
-                while (true)
-                {
-                    var needSpecialties = FindNeedSpecialties(specialties, sortInformation, pageNumber);
-                    ShowColumns(columnNames);
-                    ShowSomeSpecialties(needSpecialties);
-                    if (CheckNeedContinue("If you want to exit, click 'Enter'"))
-                    {
-                        return;
-                    }
-                    if (CheckNeedContinue("If you want to change sort information, click 'Enter'"))
-                    {
-                        sortInformation = ReadNeedSortInformation(columnNames.ToList());
-                    }
-                    if (CheckNeedContinue("If you want to change page number, click 'Enter'"))
-                    {
-                        pageNumber = ReadPageNumber(specialties.Count / 20);
-                    }
-                }
-            }
-        }
-
-        private void ShowSomeSpecialties(List<Specialty> specialties)
-        {
-            foreach (var specialty in specialties)
-            {
+                var specialty = (Specialty)Convert.ChangeType(entitySpecialty, typeof(TEntity));
                 Console.WriteLine(specialty.Name);
             }
         }
 
-        private List<Specialty> FindNeedSpecialties(List<Specialty> specialties, SortInformation sortInformation, int pageNumber)
-        {
-            if (sortInformation.sortType == SortType.InOriginalOrder)
-            {
-                switch (sortInformation.SortColumns.Count)
-                {
-                    case 0:
-                        return specialties.Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 1:
-                        return specialties.OrderBy(specialty => specialty.Name).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                }
-            }
-            else
-            {
-                switch (sortInformation.SortColumns.Count)
-                {
-                    case 0:
-                        return specialties.AsEnumerable().Reverse().Skip((pageNumber - 1) * 20).Take(20).ToList();
-                    case 1:
-                        return specialties.OrderByDescending(specialty => specialty.Name).Skip((pageNumber - 1) * 20).Take(20).ToList();
-                }
-            }
-            return specialties;
-        }
 
-        public void ShowStudentScoresCount(List<StudentScoresCount> studentScoresCounts)
+
+
+
+
+
+        public void ShowStudentScoresCount<TEntity>(IQueryable<TEntity> studentScoresCounts)
         {
-            ShowColumns(new string[] { "Id", "Student first name", "Student last name", "Score count"});
-            foreach (var studentScoreCount in studentScoresCounts)
+            foreach (var entityStudentScoreCount in studentScoresCounts)
             {
+                var studentScoreCount = (StudentScoresCount)Convert.ChangeType(entityStudentScoreCount, typeof(TEntity));
                 Console.WriteLine($"{studentScoreCount.Id,-20} | {studentScoreCount.FirstName,-20} | {studentScoreCount.LastName, -20} | {studentScoreCount.ScoreCount}");
             }
         }

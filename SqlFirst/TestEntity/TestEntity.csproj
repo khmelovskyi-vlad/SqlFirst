@@ -162,11 +162,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Column.cs" />
     <Compile Include="CommandMaster.cs" />
     <Compile Include="CommandPrototype.cs" />
     <Compile Include="ConsoleUserInteractor.cs" />
     <Compile Include="Course.cs" />
     <Compile Include="DataType.cs" />
+    <Compile Include="Field.cs" />
     <Compile Include="Initializer.cs" />
     <Compile Include="IUserInteractor.cs" />
     <Compile Include="Migrations\20200906163112_InitialCreate.cs" />
@@ -177,15 +179,25 @@
     <Compile Include="Migrations\20200906163133_sb-ShowSomeStudents.designer.cs">
       <DependentUpon>20200906163133_sb-ShowSomeStudents.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\20200913124439_Add_[dbo].Viev_AllScores.cs" />
+    <Compile Include="Migrations\20200913124439_Add_[dbo].Viev_AllScores.designer.cs">
+      <DependentUpon>20200913124439_Add_[dbo].Viev_AllScores.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\20200913125836_Add_[dbo].Viev_AllSubjects.cs" />
+    <Compile Include="Migrations\20200913125836_Add_[dbo].Viev_AllSubjects.designer.cs">
+      <DependentUpon>20200913125836_Add_[dbo].Viev_AllSubjects.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\UniversityContextModelSnapshot.cs" />
     <Compile Include="Mode.cs" />
     <Compile Include="NumberCoursesScores.cs" />
     <Compile Include="Score.cs" />
-    <Compile Include="SortInformation.cs" />
-    <Compile Include="SortType.cs" />
+    <Compile Include="Sort.cs" />
     <Compile Include="Specialty.cs" />
+    <Compile Include="SqlConnector.cs" />
+    <Compile Include="SqlMaster.cs" />
     <Compile Include="Student.cs" />
     <Compile Include="StudentScoresCount.cs" />
+    <Compile Include="SubjectPrototype.cs" />
     <Compile Include="UniversityContext.cs" />
     <Compile Include="Group.cs" />
     <Compile Include="Program.cs" />

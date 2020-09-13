@@ -20,7 +20,8 @@ namespace TestEntity
         public DbSet<SubjectCourse> SubjectCourses { get; set; }
         public DbSet<SubjectSpecialty> SubjectSpecialties { get; set; }
         public DbSet<StudentScoresCount> StudentScoresCounts { get; set; }
-        
+        public DbSet<SubjectPrototype> SubjectPrototypes { get; set; }
+
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -29,8 +30,8 @@ namespace TestEntity
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder
-                .Entity<StudentScoresCount>(ssc => ssc.ToView("Viev_StudentScoresCount"));
+            modelBuilder.Entity<StudentScoresCount>(ssc => ssc.ToView("Viev_StudentScoresCount"));
+            modelBuilder.Entity<SubjectPrototype>(sp => { sp.HasNoKey(); sp.ToView("Viev_AllSubjects"); });
             #region Keys
 
             modelBuilder.Entity<SubjectSpecialty>()
@@ -104,6 +105,7 @@ namespace TestEntity
             //    .Property(g => g.Name)
             //    .HasComputedColumnSql("");
         }
+
         private SqlConnectionStringBuilder GetSqlConnectionStringBuilder()
         {
             SqlConnectionStringBuilder sqlConnectionStringBuilder = new SqlConnectionStringBuilder();

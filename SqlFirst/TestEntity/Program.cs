@@ -23,8 +23,25 @@ namespace TestEntity
         }
         static async Task<int> Main(string[] args)
         {
-            CommandMaster commandMaster = new CommandMaster(new ConsoleUserInteractor(), new Initializer());
+            //using (var university = new UniversityContext())
+            //{
+            //    var student = university.Students.First();
+            //    var ee = university.ChangeTracker.Entries();
+            //    foreach (var item in ee)
+            //    {
+            //        item.CurrentValues.Properties.
+            //    }
+            //    var s = university.Entry(new Student() { });
+            //}
+                CommandMaster commandMaster = new CommandMaster(new ConsoleUserInteractor(), new Initializer(), new SqlMaster());
             await commandMaster.Run();
+
+            //        var subjectPrototypes = subjects.SelectMany(subject => subject.SubjectCourses.Join(subject.SubjectSpecialties,
+            //                subCo => subCo.Subject,
+            //                subSpec => subSpec.Subject,
+            //                (subCo, subspec) => new SubjectPrototype (subCo.Subject.Name, subCo.Course.Name, subspec.Specialty.Name ))).ToList();
+
+
             using (var un = new UniversityContext())
             {
                 var scores = await un.Scores.Include(score => score.Course).ToListAsync();

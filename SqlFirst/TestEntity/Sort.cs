@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace TestEntity
 {
-    class SortInformation
+    class Sort
     {
-        public List<string> SortColumns = new List<string>();
-        public SortType sortType = SortType.InOriginalOrder;
+        public Field Field { get; set; }
+        public bool IsDescending { get; set; }
     }
 }

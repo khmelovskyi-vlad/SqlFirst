@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TestEntity
 {
-    enum Mode
+    enum ManipulationDataMode
     {
         Initialize,
         AddStudent,

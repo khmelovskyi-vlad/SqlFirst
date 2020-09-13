@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,39 +9,43 @@ namespace TestEntity
 {
     class CommandMaster
     {
-        public CommandMaster(IUserInteractor userInteractor, Initializer initializer)
+        public CommandMaster(IUserInteractor userInteractor, Initializer initializer, SqlMaster sqlMaster)
         {
             this.userInteractor = userInteractor;
             this.initializer = initializer;
+            this.sqlMaster = sqlMaster;
         }
         private IUserInteractor userInteractor;
         private Initializer initializer;
+        private SqlMaster sqlMaster;
         public async Task Run()
         {
+            //await sqlMaster.Foo();
             while (true)
             {
                 var mode = userInteractor.ReadMode();
                 switch (mode)
                 {
-                    case Mode.Initialize:
+                    case ManipulationDataMode.Initialize:
                         await FirstInitialize();
                         break;
-                    case Mode.AddStudent:
+                    case ManipulationDataMode.AddStudent:
                         await AddStudents();
                         break;
-                    case Mode.AddScores:
+                    case ManipulationDataMode.AddScores:
                         await AddScores();
                         break;
-                    case Mode.ChangeScores:
+                    case ManipulationDataMode.ChangeScores:
                         await ChangeScores();
                         break;
-                    case Mode.RandomString:
+                    case ManipulationDataMode.RandomString:
                         await GetRandomString();
                         break;
-                    case Mode.ShowData:
-                        await ShowData();
+                    case ManipulationDataMode.ShowData:
+                        SqlConnector sqlConnector = new SqlConnector();
+                        sqlConnector.Connect((universityContext) => ShowData(universityContext));
                         break;
-                    case Mode.UpdateData:
+                    case ManipulationDataMode.UpdateData:
                         await UpdateData();
                         break;
                     default:
@@ -51,33 +56,33 @@ namespace TestEntity
         private async Task UpdateData()
         {
             var sql = userInteractor.CreateSql();
-            var RowsNumberAffected = await initializer.UpdateData(sql);
+            var RowsNumberAffected = await sqlMaster.UpdateData(sql);
             userInteractor.WriteRowsNumberAffected(RowsNumberAffected);
         }
         private async Task GetRandomString()
         {
             var parameters = userInteractor.ReadParametersForString();
-            var randomString = await initializer.CreateRandomString(parameters);
+            var randomString = await sqlMaster.GetRandomString(parameters);
             userInteractor.WriteLine(randomString);
         }
         private async Task ChangeScores()
         {
-            var allScores = await initializer.GetScores();
+            var allScores = await sqlMaster.GetScores();
             var newScores = userInteractor.ReadScoresToChange(allScores);
-            await initializer.ChangeScores(newScores);
+            await sqlMaster.ChangeScores(newScores);
         }
         private async Task AddScores()
         {
-            var students = await initializer.GetStudents();
-            var subjects = await initializer.GetSubjects();//must be GetAllSubjects()?
+            var students = await sqlMaster.GetStudents();
+            var subjects = await sqlMaster.GetSubjects();//must be GetAllSubjects()?
             var scores = userInteractor.ReadScores(students, subjects);
-            await initializer.AddScores(scores);
+            await sqlMaster.AddScores(scores);
         }
         private async Task AddStudents()
         {
-            var groups = await initializer.GetGroups();
+            var groups = await sqlMaster.GetGroups();
             var newStudents = userInteractor.ReadStudents(groups);
-            await initializer.AddStudents(newStudents);
+            await sqlMaster.AddStudents(newStudents);
         }
         private async Task FirstInitialize()
         {
@@ -90,26 +95,30 @@ namespace TestEntity
                 userInteractor.WriteLine("Data wasn't initialized, because it was initially initialized");
             }
         }
-        private async Task ShowStudentScoresCount()
+        private void ShowStudentScoresCount(UniversityContext universityContext)
         {
-            var studentScoresCount = await initializer.GetStudentScoresCount();
-            userInteractor.ShowStudentScoresCount(studentScoresCount);
+            var studentScoresCount = universityContext.StudentScoresCounts;
+            userInteractor.ShowData(studentScoresCount);
         }
-        private async Task ShowCleverStudents()
+        private void ShowCleverStudents(UniversityContext universityContext)
         {
             var maxFoursCount = userInteractor.ReadMaxFoursCount();
-            var cleverStudents = await initializer.GetCleverStudents(maxFoursCount);
-            userInteractor.ShowStudents(cleverStudents);
+            var cleverStudents = universityContext.Students.FromSqlRaw("SELECT * " +
+                    "FROM GetCleverStudents(@maxFoursCount)", maxFoursCount);
+            userInteractor.ShowData(cleverStudents);
         }
-        private async Task ShowNumberCoursesScores()
+        private void ShowNumberCoursesScores(UniversityContext universityContext)
         {
-            var scores = await initializer.GetScores();
-            var numberCoursesScores = FillNumberCoursesScores(scores);
+            var numberCoursesScores = FillNumberCoursesScores(universityContext);
             userInteractor.ShowNumberCoursesScores(numberCoursesScores);
         }
-        private List<NumberCourseScores> FillNumberCoursesScores(List<Score> scores)
+        private List<NumberCourseScores> FillNumberCoursesScores(UniversityContext universityContext)
         {
-            return scores.GroupBy(
+            return universityContext.Scores
+                    .Include(score => score.Course)
+                    .Include(score => score.Subject)
+                    .Include(score => score.Student)
+                    .ThenInclude(student => student.Group).AsEnumerable().GroupBy(
                 score => score.Course,
                 score => score.Id,
                 (key, scoress) => new NumberCourseScores
@@ -118,40 +127,46 @@ namespace TestEntity
                     scoress.Count()
                 )
                 )
-                .OrderBy(course => course.CourseName)
-                .ToList();
+                .OrderBy(course => course.CourseName).ToList();
         }
-        private async Task ShowData()
+        private void ShowData(UniversityContext universityContext)
         {
             var dataType = userInteractor.SelectDataType();
             switch (dataType)
             {
                 case DataType.Student:
-                    userInteractor.ShowStudents(await initializer.GetStudents());
+                    userInteractor.ShowData(universityContext.Students
+                    .Include(student => student.Group));
                     break;
                 case DataType.Score:
-                    userInteractor.ShowScores(await initializer.GetScores());
+                    userInteractor.ShowData(universityContext.Scores
+                    .Include(score => score.Course)
+                    .Include(score => score.Subject)
+                    .Include(score => score.Student)
+                    .ThenInclude(student => student.Group));
                     break;
                 case DataType.Group:
-                    userInteractor.ShowGroups(await initializer.GetGroups());
+                    userInteractor.ShowData(universityContext.Groups
+                    .Include(group => group.Course)
+                    .Include(group => group.Specialty));
                     break;
                 case DataType.Course:
-                    userInteractor.ShowCourses(await initializer.GetCourses());
+                    userInteractor.ShowData(universityContext.Courses);
                     break;
                 case DataType.Subject:
-                    userInteractor.ShowSubjects(await initializer.GetSubjects());
+                    userInteractor.ShowData(universityContext.SubjectPrototypes);
                     break;
                 case DataType.Specialty:
-                    userInteractor.ShowSpecialties(await initializer.GetSpecialties());
+                    userInteractor.ShowData(universityContext.Specialties);
                     break;
                 case DataType.CleverStudents:
-                    await ShowCleverStudents();
+                    ShowCleverStudents(universityContext);
                     break;
                 case DataType.StudentScoresCount:
-                    await ShowStudentScoresCount();
+                    ShowStudentScoresCount(universityContext);
                     break;
                 case DataType.NumberCoursesScores:
-                    await ShowNumberCoursesScores();
+                    ShowNumberCoursesScores(universityContext);
                     break;
                 default:
                     break;
