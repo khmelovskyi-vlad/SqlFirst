@@ -187,8 +187,17 @@
     <Compile Include="Migrations\20200913125836_Add_[dbo].Viev_AllSubjects.designer.cs">
       <DependentUpon>20200913125836_Add_[dbo].Viev_AllSubjects.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\20200914134347_Some.cs" />
+    <Compile Include="Migrations\20200914134347_Some.designer.cs">
+      <DependentUpon>20200914134347_Some.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\20200914152414_AddFirstData.cs" />
+    <Compile Include="Migrations\20200914152414_AddFirstData.designer.cs">
+      <DependentUpon>20200914152414_AddFirstData.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\UniversityContextModelSnapshot.cs" />
     <Compile Include="Mode.cs" />
+    <Compile Include="ModelBuilderExtensions.cs" />
     <Compile Include="NumberCoursesScores.cs" />
     <Compile Include="Score.cs" />
     <Compile Include="Sort.cs" />

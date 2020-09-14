@@ -23,18 +23,36 @@ namespace TestEntity
         }
         static async Task<int> Main(string[] args)
         {
-            //using (var university = new UniversityContext())
-            //{
-            //    var student = university.Students.First();
-            //    var ee = university.ChangeTracker.Entries();
-            //    foreach (var item in ee)
-            //    {
-            //        item.CurrentValues.Properties.
-            //    }
-            //    var s = university.Entry(new Student() { });
-            //}
-                CommandMaster commandMaster = new CommandMaster(new ConsoleUserInteractor(), new Initializer(), new SqlMaster());
+            CommandMaster commandMaster = new CommandMaster(new ConsoleUserInteractor(), new Initializer(), new SqlMaster());
             await commandMaster.Run();
+            using (var university = new UniversityContext())
+            {
+                var newStudent = new Student() { Id = Guid.NewGuid(), FirstName = "fn", LastName = "ln", Group = new Group() { Id = Guid.Parse("0df336b2-95a6-4d02-921c-00999f57806f") } };
+                var res = university.Attach(newStudent).State = EntityState.Deleted;
+                Student newStudent2 = new Student();
+                var res2 = university.Attach(newStudent2).State = EntityState.Deleted;
+
+                var changeTracker = university.ChangeTracker.Entries();
+                foreach (var entry in changeTracker)
+                {
+                    Console.WriteLine($"{entry.Entity.GetType().Name}, {entry.State}");
+                }
+
+
+                var disconnectedEntity = new Student();
+                var insd = university.Entry(disconnectedEntity);
+                Console.WriteLine(university.Entry(disconnectedEntity).State);
+                var student = university.Students.ToList();
+                var stFirst = student.First();
+                stFirst.LastName = "lol";
+                university.Students.Add(new Student());
+                var ee = university.ChangeTracker.Entries();
+                foreach (var entry in ee)
+                {
+                    Console.WriteLine($"{entry.Entity.GetType().Name}, {entry.State}"); 
+                }
+                var s = university.Entry(new Student() { });
+            }
 
             //        var subjectPrototypes = subjects.SelectMany(subject => subject.SubjectCourses.Join(subject.SubjectSpecialties,
             //                subCo => subCo.Subject,
@@ -278,11 +296,11 @@ namespace TestEntity
             //    db.Specialties.RemoveRange(db.Specialties);
             //    await db.SaveChangesAsync();
             //}
-            Initializer initializer = new Initializer();
-            await initializer.FirstInitializeData();
+            //Initializer initializer = new Initializer();
+            //await initializer.FirstInitializeData();
             //await initializer.ChangeScores();
             //await initializer.AddScore();
-            await initializer.FirstInitializeData();
+            //await initializer.FirstInitializeData();
             using (var db = new UniversityContext())
             {
                 //var students = await db.Students.Where(studentt => studentt.Group.Course.Name == 1).Include(studentt => studentt.Group).ToListAsync();

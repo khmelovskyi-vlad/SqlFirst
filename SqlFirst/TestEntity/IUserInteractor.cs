@@ -14,7 +14,7 @@ namespace TestEntity
         List<Score> ReadScoresToChange(List<Score> scores);
         ManipulationDataMode ReadMode();
         DataType SelectDataType();
-
+        Student ReadStudent();
         //void ShowStudents(List<Student> students);
         //void ShowScores(List<Score> scores);
         //void ShowGroups(List<Group> groups);

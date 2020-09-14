@@ -60,6 +60,14 @@ namespace TestEntity
         //            "FROM GetCleverStudents(@maxFoursCount)", sqlParameter).ToListAsync();
         //    }
         //}
+        public void AddStudent(Student student)
+        {
+            using (var universityContext = new UniversityContext())
+            {
+                var result = universityContext.Attach(student).State = EntityState.Added;
+                universityContext.SaveChanges();
+            }
+        }
         public async Task<List<Student>> GetStudents()
         {
             using (var university = new UniversityContext())

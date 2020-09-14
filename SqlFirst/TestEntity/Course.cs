@@ -14,8 +14,8 @@ namespace TestEntity
         public int Name { get; set; }
 
 
-        public List<Group> Groups { get; set; }
         public List<Score> Scores { get; set; }
+        public List<Group> Groups { get; set; }
         public List<SubjectCourse> SubjectCourses { get; set; }
     }
 }

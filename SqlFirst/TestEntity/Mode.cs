@@ -8,12 +8,12 @@ namespace TestEntity
 {
     enum ManipulationDataMode
     {
-        Initialize,
-        AddStudent,
+        AddStudents,
         AddScores,
         ChangeScores,
         RandomString,
         ShowData,
-        UpdateData
+        UpdateData,
+        AddStudent
     }
 }

@@ -8,6 +8,87 @@ namespace TestEntity
 {
     class ConsoleUserInteractor : IUserInteractor
     {
+        public Student ReadStudent()
+        {
+            var student = new Student();
+            student.Id = ReadGuid("Write a student id");
+            student.FirstName = ReadData("Write a student first name");
+            student.LastName = ReadData("Write a student last name");
+            var group = ReadGroup();
+            student.Group = group;
+            return student;
+        }
+        private Group ReadGroup()
+        {
+            var group = new Group();
+            if (SelectVariants("If you want to create new group, click 'Enter'"))
+            {
+                group.Name = ReadData("Write a group name");
+                group.Course = ReadCourse();
+                group.Specialty = ReadSpecialty();
+            }
+            else
+            {
+                group.Id = ReadGuid("Write a group id");
+            }
+            return group;
+        }
+        private Course ReadCourse()
+        {
+            var course = new Course();
+            if (SelectVariants("If you want to create new course, click 'Enter'"))
+            {
+                course.Name = CourseName("Write a course name");
+            }
+            else
+            {
+                course.Id = ReadGuid("Write a course id");
+            }
+            return course;
+        }
+        private Specialty ReadSpecialty()
+        {
+            var specialty = new Specialty();
+            if (SelectVariants("If you want to create new specialty, click 'Enter'"))
+            {
+                specialty.Name = ReadData("Write a specialty name");
+            }
+            else
+            {
+                specialty.Id = ReadGuid("Write a specialty id");
+            }
+            return specialty;
+        }
+        private Guid ReadGuid(string message)
+        {
+            while (true)
+            {
+                Console.WriteLine(message);
+                try
+                {
+                    return Guid.Parse(Console.ReadLine());
+                }
+                catch (FormatException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            }
+        }
+        private int CourseName(string message)
+        {
+            while (true)
+            {
+                Console.WriteLine(message);
+                try
+                {
+                    return Convert.ToInt32(Console.ReadLine());
+                }
+                catch (FormatException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            }
+        }
         public List<Student> ReadStudents(List<Group> groups)
         {
             List<Student> students = new List<Student>();
@@ -25,6 +106,15 @@ namespace TestEntity
                     return students;
                 }
             }
+        }
+        private bool SelectVariants(string offer)
+        {
+            Console.WriteLine(offer);
+            if (Console.ReadKey(true).Key == ConsoleKey.Enter)
+            {
+                return true;
+            }
+            return false;
         }
         private bool CheckNeedAddMore(string offer)
         {
@@ -270,15 +360,11 @@ namespace TestEntity
                 }
                 else if (key.Key == ConsoleKey.S)
                 {
-                    return ManipulationDataMode.AddStudent;
+                    return ManipulationDataMode.AddStudents;
                 }
                 else if (key.Key == ConsoleKey.D)
                 {
                     return ManipulationDataMode.ShowData;
-                }
-                else if (key.Key == ConsoleKey.I)
-                {
-                    return ManipulationDataMode.Initialize;
                 }
                 else if (key.Key == ConsoleKey.R)
                 {
@@ -287,6 +373,10 @@ namespace TestEntity
                 else if (key.Key == ConsoleKey.U)
                 {
                     return ManipulationDataMode.UpdateData;
+                }
+                else if (key.Key == ConsoleKey.A)
+                {
+                    return ManipulationDataMode.AddStudent;
                 }
                 else
                 {
@@ -300,9 +390,9 @@ namespace TestEntity
             Console.WriteLine("If you want to change scores, click 'Shift + s'");
             Console.WriteLine("If you want to add new students, click 's'");
             Console.WriteLine("If you want to watch some data, click 'd'");
-            Console.WriteLine("If you want to initialize data, click 'i'");
             Console.WriteLine("If you want to take a random string, click 'r'");
             Console.WriteLine("If you want to update data, click 'u'");
+            Console.WriteLine("If you want to add student, click 'a'");
         }
 
         public DataType SelectDataType()

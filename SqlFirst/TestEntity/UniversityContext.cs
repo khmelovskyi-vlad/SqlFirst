@@ -104,6 +104,7 @@ namespace TestEntity
             //modelBuilder.Entity<Group>()
             //    .Property(g => g.Name)
             //    .HasComputedColumnSql("");
+            modelBuilder.Seed();
         }
 
         private SqlConnectionStringBuilder GetSqlConnectionStringBuilder()

@@ -26,10 +26,7 @@ namespace TestEntity
                 var mode = userInteractor.ReadMode();
                 switch (mode)
                 {
-                    case ManipulationDataMode.Initialize:
-                        await FirstInitialize();
-                        break;
-                    case ManipulationDataMode.AddStudent:
+                    case ManipulationDataMode.AddStudents:
                         await AddStudents();
                         break;
                     case ManipulationDataMode.AddScores:
@@ -48,10 +45,18 @@ namespace TestEntity
                     case ManipulationDataMode.UpdateData:
                         await UpdateData();
                         break;
+                    case ManipulationDataMode.AddStudent:
+                        AddStudent();
+                        break;
                     default:
                         break;
                 }
             }
+        }
+        private void AddStudent()
+        {
+            var student = userInteractor.ReadStudent();
+            sqlMaster.AddStudent(student);
         }
         private async Task UpdateData()
         {
@@ -83,17 +88,6 @@ namespace TestEntity
             var groups = await sqlMaster.GetGroups();
             var newStudents = userInteractor.ReadStudents(groups);
             await sqlMaster.AddStudents(newStudents);
-        }
-        private async Task FirstInitialize()
-        {
-            if (await initializer.FirstInitializeData())
-            {
-                userInteractor.WriteLine("Data was initialized");
-            }
-            else
-            {
-                userInteractor.WriteLine("Data wasn't initialized, because it was initially initialized");
-            }
         }
         private void ShowStudentScoresCount(UniversityContext universityContext)
         {
